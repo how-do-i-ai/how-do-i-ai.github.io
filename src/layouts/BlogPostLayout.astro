@@ -36,7 +36,12 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
 
 <article class="post">
   <header class="post-header">
+    <slot name="badges" />
     <h1 class="post-title">{frontmatter.title}</h1>
+
+    {frontmatter.description && (
+      <p class="post-description">{frontmatter.description}</p>
+    )}
 
     <div class="post-meta">
       <time datetime={new Date(frontmatter.date).toISOString()}>
@@ -72,10 +77,24 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
     margin-bottom: var(--space-8);
   }
 
+  .post-header :global(.post-badges) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
   .post-title {
     font-size: var(--text-4xl);
     font-weight: 700;
     line-height: var(--leading-tight);
+    margin-bottom: var(--space-4);
+  }
+
+  .post-description {
+    font-size: var(--text-lg);
+    color: var(--color-muted);
+    line-height: var(--leading-relaxed);
     margin-bottom: var(--space-4);
   }
 
