@@ -1,0 +1,338 @@
+---
+/**
+ * BlogPostLayout — Reading-optimised single-post layout.
+ *
+ * 680 px centred content column (65-75 chars / line), body text 18 px
+ * Inter Regular, line-height 1.7. Wraps the rendered markdown via <slot />.
+ *
+ * Does NOT depend on BaseLayout (issue #4) — composed later by the blog
+ * post page (issue #8): BaseLayout > BlogPostLayout > rendered markdown.
+ *
+ * Props:
+ *   frontmatter — the post's data object (title, description, date, etc.)
+ */
+
+import TableOfContents from '../components/TableOfContents.astro';
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    date: Date;
+    readingTime?: number;
+    [key: string]: unknown;
+  };
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { frontmatter, headings } = Astro.props;
+
+const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">{frontmatter.title}</h1>
+
+    <div class="post-meta">
+      <time datetime={new Date(frontmatter.date).toISOString()}>
+        {formattedDate}
+      </time>
+      {frontmatter.readingTime && (
+        <span class="post-meta-sep" aria-hidden="true">&middot;</span>
+        <span>{frontmatter.readingTime} min read</span>
+      )}
+    </div>
+  </header>
+
+  <TableOfContents headings={headings} />
+
+  <div class="prose">
+    <slot />
+  </div>
+</article>
+
+<style>
+  /* ------------------------------------------------------------------
+     Post chrome
+     ------------------------------------------------------------------ */
+
+  .post {
+    max-width: 680px;
+    margin-inline: auto;
+    padding-inline: var(--space-6);
+    padding-block: var(--space-12) var(--space-16);
+  }
+
+  .post-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .post-title {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-4);
+  }
+
+  .post-meta {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .post-meta-sep {
+    color: var(--color-muted);
+  }
+
+  /* ------------------------------------------------------------------
+     .prose — Markdown content typography
+     ------------------------------------------------------------------ */
+
+  .prose {
+    font-size: var(--text-lg);
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  /* --- Headings --- */
+
+  .prose :global(h1) {
+    font-size: var(--text-4xl);
+    margin-top: var(--space-16);
+    margin-bottom: var(--space-6);
+  }
+
+  .prose :global(h2) {
+    font-size: var(--text-3xl);
+    margin-top: var(--space-12);
+    margin-bottom: var(--space-4);
+  }
+
+  .prose :global(h3) {
+    font-size: var(--text-2xl);
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+  }
+
+  .prose :global(h4) {
+    font-size: var(--text-xl);
+    margin-top: var(--space-8);
+    margin-bottom: var(--space-4);
+  }
+
+  .prose :global(h5),
+  .prose :global(h6) {
+    font-size: var(--text-lg);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+
+  /* Anchored headings: shift target so the heading isn't hidden by
+     any potential sticky header once BaseLayout lands. */
+  .prose :global(h1[id]),
+  .prose :global(h2[id]),
+  .prose :global(h3[id]),
+  .prose :global(h4[id]),
+  .prose :global(h5[id]),
+  .prose :global(h6[id]) {
+    scroll-margin-top: var(--space-16);
+  }
+
+  /* --- Paragraphs --- */
+
+  .prose :global(p) {
+    margin-block: var(--space-4);
+  }
+
+  /* --- Links --- */
+
+  .prose :global(a) {
+    color: var(--color-accent);
+    text-decoration: none;
+    text-underline-offset: 0.15em;
+    transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+  }
+
+  .prose :global(a:hover) {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+  }
+
+  /* --- Lists --- */
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin-block: var(--space-4);
+    padding-left: var(--space-8);
+  }
+
+  .prose :global(ul) {
+    list-style-type: disc;
+  }
+
+  .prose :global(ol) {
+    list-style-type: decimal;
+  }
+
+  .prose :global(li) {
+    margin-block: var(--space-2);
+  }
+
+  .prose :global(li > ul),
+  .prose :global(li > ol) {
+    margin-block: var(--space-2);
+  }
+
+  /* --- Blockquote --- */
+
+  .prose :global(blockquote) {
+    border-left: 3px solid var(--color-accent);
+    padding-left: var(--space-6);
+    margin-block: var(--space-6);
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .prose :global(blockquote p) {
+    margin-block: var(--space-2);
+  }
+
+  /* --- Code blocks --- */
+
+  .prose :global(pre) {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    line-height: var(--leading-relaxed);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+    margin-block: var(--space-6);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .prose :global(pre code) {
+    padding: 0;
+    border-radius: 0;
+    background-color: transparent;
+    font-size: inherit;
+  }
+
+  /* Inline code */
+  .prose :global(:not(pre) > code) {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+  }
+
+  /* --- Images --- */
+
+  .prose :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-block: var(--space-8);
+    border-radius: var(--radius-md);
+  }
+
+  .prose :global(figure) {
+    margin-block: var(--space-8);
+  }
+
+  .prose :global(figcaption) {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    text-align: center;
+    margin-top: var(--space-2);
+  }
+
+  /* --- Tables --- */
+
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-block: var(--space-6);
+    font-size: var(--text-base);
+    overflow-x: auto;
+    display: block;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-surface);
+    text-align: left;
+  }
+
+  .prose :global(th) {
+    font-weight: 600;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-muted);
+  }
+
+  .prose :global(tr:last-child td) {
+    border-bottom: none;
+  }
+
+  /* --- Horizontal rule --- */
+
+  .prose :global(hr) {
+    border: none;
+    border-top: 1px solid var(--color-surface);
+    margin-block: var(--space-12);
+  }
+
+  /* --- Definition lists --- */
+
+  .prose :global(dl) {
+    margin-block: var(--space-4);
+  }
+
+  .prose :global(dt) {
+    font-weight: 600;
+    margin-top: var(--space-4);
+  }
+
+  .prose :global(dd) {
+    margin-left: var(--space-6);
+    margin-top: var(--space-1);
+  }
+
+  /* --- Keyboard / misc inline elements --- */
+
+  .prose :global(kbd) {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--color-muted);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+  }
+
+  .prose :global(mark) {
+    background-color: var(--color-amber);
+    padding-inline: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+
+  .prose :global(abbr[title]) {
+    text-decoration: underline dotted;
+    cursor: help;
+  }
+
+  .prose :global(sup),
+  .prose :global(sub) {
+    font-size: 0.75em;
+    line-height: 0;
+  }
+</style>
