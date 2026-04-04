@@ -1,0 +1,48 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  activePillar?: string;
+}
+
+const { title, description, activePillar } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <BaseHead title={title} description={description} />
+  <body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <header>
+      <Nav activePillar={activePillar} />
+    </header>
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: var(--space-2);
+    z-index: 100;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-accent);
+    color: #fff;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: var(--space-4);
+  }
+</style>
