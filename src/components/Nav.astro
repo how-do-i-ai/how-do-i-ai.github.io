@@ -1,5 +1,6 @@
 ---
 import { getPostsByPillar } from '../lib/posts';
+import ThemeToggle from './ThemeToggle.astro';
 
 interface Props {
   activePillar?: string;
@@ -42,8 +43,7 @@ if (showBts) {
       </ul>
 
       <div class="nav-actions">
-        <!-- ThemeToggle placeholder (issue #5) -->
-        <div class="theme-toggle-placeholder" aria-hidden="true"></div>
+        <ThemeToggle />
 
         <a href="/rss.xml" class="rss-icon-link" aria-label="RSS Feed">
           <svg
@@ -149,11 +149,6 @@ if (showBts) {
     align-items: center;
     gap: var(--space-3);
     flex-shrink: 0;
-  }
-
-  .theme-toggle-placeholder {
-    width: 1.5rem;
-    height: 1.5rem;
   }
 
   .rss-icon-link {
