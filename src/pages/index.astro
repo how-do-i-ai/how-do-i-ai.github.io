@@ -1,7 +1,129 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCardFeatured from '../components/PostCardFeatured.astro';
+import PostCard from '../components/PostCard.astro';
+import { getPublishedPosts } from '../lib/posts';
+
+const posts = await getPublishedPosts();
+const featuredPost = posts.length > 0 ? posts[0] : null;
+const recentPosts = posts.length > 1 ? posts.slice(1, 5) : [];
+const showRecentGrid = recentPosts.length >= 2;
+const hasPosts = posts.length > 0;
 ---
 
 <BaseLayout title="How Do I AI" description="AI first. For all of it.">
-  <h1>How Do I AI</h1>
+  <section class="hero" aria-label="Introduction">
+    <h1 class="hero-brand">How Do I AI<span class="hero-question-mark">?</span></h1>
+    <p class="hero-tagline">AI first. For all of it.</p>
+    <p class="hero-descriptor">Real workflows. Honest takes. No hype.</p>
+  </section>
+
+  {featuredPost && (
+    <section class="featured" aria-label="Featured post">
+      <h2 class="section-heading">Latest</h2>
+      <PostCardFeatured post={featuredPost} />
+    </section>
+  )}
+
+  {showRecentGrid && (
+    <section class="recent" aria-label="Recent posts">
+      <h2 class="section-heading">Recent</h2>
+      <div class="recent-grid">
+        {recentPosts.map((post) => (
+          <PostCard post={post} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {hasPosts && (
+    <div class="cta">
+      <a href="/blog/" class="cta-link">See all posts &rarr;</a>
+    </div>
+  )}
 </BaseLayout>
+
+<style>
+  /* Hero section */
+  .hero {
+    text-align: center;
+    padding: var(--space-16) var(--space-4) var(--space-12);
+  }
+
+  .hero-brand {
+    font-size: clamp(var(--text-4xl), 8vw, 4rem);
+    font-weight: 700;
+    line-height: var(--leading-tight);
+    color: var(--color-text);
+  }
+
+  .hero-question-mark {
+    color: var(--color-accent);
+  }
+
+  .hero-tagline {
+    font-size: var(--text-xl);
+    color: var(--color-muted);
+    margin-block: var(--space-4) var(--space-2);
+  }
+
+  .hero-descriptor {
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    margin-block: 0;
+  }
+
+  /* Section headings */
+  .section-heading {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+    margin-block-end: var(--space-4);
+  }
+
+  /* Featured post section */
+  .featured {
+    max-width: 48rem;
+    margin-inline: auto;
+    padding: var(--space-8) var(--space-4);
+  }
+
+  /* Recent posts section */
+  .recent {
+    max-width: 64rem;
+    margin-inline: auto;
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: var(--space-4);
+  }
+
+  /* CTA */
+  .cta {
+    text-align: center;
+    padding: var(--space-8) var(--space-4) var(--space-16);
+  }
+
+  .cta-link {
+    display: inline-block;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-md);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast);
+  }
+
+  .cta-link:hover {
+    background-color: var(--color-surface);
+    color: var(--color-teal);
+  }
+</style>
