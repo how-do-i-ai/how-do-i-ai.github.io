@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogFilter from '../../components/BlogFilter.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts } from '../../lib/posts';
+
+const posts = await getPublishedPosts();
+---
+
+<BaseLayout title="Blog — How Do I AI" description="All posts from How Do I AI, sorted by date. Filter by pillar, series, or tag.">
+  <section class="blog-index">
+    <div class="blog-header">
+      <h1>Blog</h1>
+      <p class="blog-subtitle">Explore all posts — filter by pillar, series, or tag.</p>
+    </div>
+
+    <BlogFilter>
+      {posts.map((post) => (
+        <div
+          class="post-card-wrapper"
+          data-pillar={post.data.pillar}
+          data-series={post.data.series || ''}
+          data-tags={post.data.tags.join(',')}
+        >
+          <PostCard post={post} />
+        </div>
+      ))}
+    </BlogFilter>
+  </section>
+</BaseLayout>
+
+<style>
+  .blog-index {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .blog-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .blog-header h1 {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+  }
+
+  .blog-subtitle {
+    font-size: var(--text-lg);
+    color: var(--color-muted);
+    margin: 0;
+  }
+</style>

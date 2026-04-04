@@ -1,0 +1,418 @@
+---
+/**
+ * BlogFilter — client-side filtering and pagination island.
+ *
+ * Reads ?pillar=, ?series=, ?tag= and ?page= from the URL on mount.
+ * Sets display:none on non-matching card wrappers via data attributes.
+ * Updates the URL via history.replaceState.
+ * Shows active filter chips with "X" to remove.
+ * Combined filters use AND logic.
+ * Client-side pagination: shows/hides sets of 12 posts.
+ */
+---
+
+<div class="blog-filter" id="blog-filter">
+  <!-- Active filter chips (populated by JS) -->
+  <div class="filter-chips" id="filter-chips" role="region" aria-label="Active filters"></div>
+
+  <!-- Empty state (hidden by default) -->
+  <div class="empty-state" id="empty-state" hidden>
+    <p>No posts match your filters. <a href="/blog/" id="clear-filters-link">Show all posts</a></p>
+  </div>
+
+  <!-- Post grid (server-rendered cards are slotted here) -->
+  <div class="post-grid" id="post-grid">
+    <slot />
+  </div>
+
+  <!-- Pagination controls -->
+  <nav class="pagination" id="pagination" aria-label="Blog pagination" hidden>
+    <button class="pagination-btn" id="pagination-prev" aria-label="Previous page" disabled>
+      Previous
+    </button>
+    <div class="pagination-pages" id="pagination-pages"></div>
+    <button class="pagination-btn" id="pagination-next" aria-label="Next page">
+      Next
+    </button>
+  </nav>
+</div>
+
+<style>
+  .blog-filter {
+    width: 100%;
+  }
+
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+  }
+
+  .filter-chips:empty {
+    display: none;
+    margin-bottom: 0;
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: none;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+  }
+
+  .filter-chip:hover {
+    background-color: var(--color-muted);
+    color: var(--color-bg);
+  }
+
+  .filter-chip-x {
+    font-size: var(--text-xs);
+    line-height: 1;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--space-12) var(--space-4);
+    color: var(--color-muted);
+    font-size: var(--text-lg);
+  }
+
+  .empty-state a {
+    color: var(--color-accent);
+    text-decoration: underline;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  @media (min-width: 768px) {
+    .post-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .post-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-8);
+    flex-wrap: wrap;
+  }
+
+  .pagination-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    background-color: var(--color-accent);
+    color: #fff;
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+
+  .pagination-page:hover {
+    background-color: var(--color-surface);
+  }
+
+  .pagination-page[aria-current="page"] {
+    background-color: var(--color-accent);
+    color: #fff;
+    cursor: default;
+  }
+
+  .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    user-select: none;
+  }
+</style>
+
+<script>
+  const POSTS_PER_PAGE = 12;
+
+  const PILLAR_LABELS: Record<string, string> = {
+    'ai-first-thinking': 'AI-First Thinking',
+    'ai-in-practice': 'AI in Practice',
+    'tools-and-workflows': 'Tools & Workflows',
+    'behind-the-scenes': 'Behind the Scenes',
+  };
+
+  const SERIES_LABELS: Record<string, string> = {
+    'ai-at-home': 'AI at Home',
+    'ai-at-work': 'AI at Work',
+    'ai-for-gigs': 'AI for Gigs',
+    'ai-mindset': 'AI Mindset',
+  };
+
+  function init() {
+    const grid = document.getElementById('post-grid');
+    const chipsContainer = document.getElementById('filter-chips');
+    const emptyState = document.getElementById('empty-state');
+    const pagination = document.getElementById('pagination');
+    const prevBtn = document.getElementById('pagination-prev') as HTMLButtonElement;
+    const nextBtn = document.getElementById('pagination-next') as HTMLButtonElement;
+    const pagesContainer = document.getElementById('pagination-pages');
+
+    if (!grid || !chipsContainer || !emptyState || !pagination || !prevBtn || !nextBtn || !pagesContainer) return;
+
+    const allCards = Array.from(grid.querySelectorAll<HTMLElement>('[data-pillar]'));
+
+    function getFilters() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        pillar: params.get('pillar') || '',
+        series: params.get('series') || '',
+        tag: params.get('tag') || '',
+        page: parseInt(params.get('page') || '1', 10),
+      };
+    }
+
+    function setFilters(filters: { pillar: string; series: string; tag: string; page: number }) {
+      const params = new URLSearchParams();
+      if (filters.pillar) params.set('pillar', filters.pillar);
+      if (filters.series) params.set('series', filters.series);
+      if (filters.tag) params.set('tag', filters.tag);
+      if (filters.page > 1) params.set('page', String(filters.page));
+      const qs = params.toString();
+      const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      history.replaceState(null, '', url);
+    }
+
+    function matchesFilter(card: HTMLElement, filters: { pillar: string; series: string; tag: string }) {
+      if (filters.pillar && card.dataset.pillar !== filters.pillar) return false;
+      if (filters.series && card.dataset.series !== filters.series) return false;
+      if (filters.tag) {
+        const tags = (card.dataset.tags || '').split(',').map((t) => t.trim()).filter(Boolean);
+        if (!tags.includes(filters.tag)) return false;
+      }
+      return true;
+    }
+
+    function renderChips(filters: { pillar: string; series: string; tag: string }) {
+      chipsContainer!.innerHTML = '';
+      if (filters.pillar) {
+        chipsContainer!.appendChild(createChip('pillar', filters.pillar, PILLAR_LABELS[filters.pillar] || filters.pillar));
+      }
+      if (filters.series) {
+        chipsContainer!.appendChild(createChip('series', filters.series, SERIES_LABELS[filters.series] || filters.series));
+      }
+      if (filters.tag) {
+        chipsContainer!.appendChild(createChip('tag', filters.tag, `#${filters.tag}`));
+      }
+    }
+
+    function createChip(type: string, value: string, label: string): HTMLButtonElement {
+      const btn = document.createElement('button');
+      btn.className = 'filter-chip';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', `Remove ${label} filter`);
+      btn.innerHTML = `${label} <span class="filter-chip-x" aria-hidden="true">&times;</span>`;
+      btn.addEventListener('click', () => {
+        const f = getFilters();
+        if (type === 'pillar') f.pillar = '';
+        if (type === 'series') f.series = '';
+        if (type === 'tag') f.tag = '';
+        f.page = 1;
+        setFilters(f);
+        apply();
+      });
+      return btn;
+    }
+
+    function renderPagination(visibleCount: number, currentPage: number, totalPages: number) {
+      if (totalPages <= 1) {
+        pagination!.hidden = true;
+        return;
+      }
+
+      pagination!.hidden = false;
+      prevBtn!.disabled = currentPage <= 1;
+      nextBtn!.disabled = currentPage >= totalPages;
+
+      pagesContainer!.innerHTML = '';
+
+      const pages = computePageNumbers(currentPage, totalPages);
+      for (const item of pages) {
+        if (item === '...') {
+          const span = document.createElement('span');
+          span.className = 'pagination-ellipsis';
+          span.textContent = '...';
+          span.setAttribute('aria-hidden', 'true');
+          pagesContainer!.appendChild(span);
+        } else {
+          const btn = document.createElement('button');
+          btn.className = 'pagination-page';
+          btn.type = 'button';
+          btn.textContent = String(item);
+          if (item === currentPage) {
+            btn.setAttribute('aria-current', 'page');
+          }
+          btn.addEventListener('click', () => {
+            const f = getFilters();
+            f.page = item as number;
+            setFilters(f);
+            apply();
+            grid!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          });
+          pagesContainer!.appendChild(btn);
+        }
+      }
+    }
+
+    function computePageNumbers(current: number, total: number): (number | '...')[] {
+      if (total <= 7) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+
+      const pages: (number | '...')[] = [1];
+
+      if (current > 3) {
+        pages.push('...');
+      }
+
+      const start = Math.max(2, current - 1);
+      const end = Math.min(total - 1, current + 1);
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (current < total - 2) {
+        pages.push('...');
+      }
+
+      pages.push(total);
+      return pages;
+    }
+
+    function apply() {
+      const filters = getFilters();
+
+      // Filter
+      const matching: HTMLElement[] = [];
+      for (const card of allCards) {
+        const isMatch = matchesFilter(card, filters);
+        if (isMatch) {
+          matching.push(card);
+        }
+      }
+
+      // Paginate
+      const totalPages = Math.max(1, Math.ceil(matching.length / POSTS_PER_PAGE));
+      const currentPage = Math.min(Math.max(1, filters.page), totalPages);
+      if (currentPage !== filters.page) {
+        filters.page = currentPage;
+        setFilters(filters);
+      }
+
+      const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+      const endIndex = startIndex + POSTS_PER_PAGE;
+      const visibleSet = new Set(matching.slice(startIndex, endIndex));
+
+      // Apply visibility
+      for (const card of allCards) {
+        card.style.display = visibleSet.has(card) ? '' : 'none';
+      }
+
+      // UI updates
+      const hasFilters = !!(filters.pillar || filters.series || filters.tag);
+      emptyState!.hidden = matching.length > 0;
+      renderChips(filters);
+      renderPagination(matching.length, currentPage, totalPages);
+    }
+
+    // Navigation buttons
+    prevBtn.addEventListener('click', () => {
+      const f = getFilters();
+      f.page = Math.max(1, f.page - 1);
+      setFilters(f);
+      apply();
+      grid!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const f = getFilters();
+      f.page = f.page + 1;
+      setFilters(f);
+      apply();
+      grid!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    // Clear filters link
+    const clearLink = document.getElementById('clear-filters-link');
+    if (clearLink) {
+      clearLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        setFilters({ pillar: '', series: '', tag: '', page: 1 });
+        apply();
+      });
+    }
+
+    // Initial apply
+    apply();
+  }
+
+  // Run after DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
