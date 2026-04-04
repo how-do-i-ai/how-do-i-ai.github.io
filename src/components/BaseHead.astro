@@ -2,11 +2,21 @@
 interface Props {
   title: string;
   description: string;
+  image?: string;
+  url?: URL | string;
+  type?: string;
 }
 
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  image = '/og-default.png',
+  url = Astro.url,
+  type = 'website',
+} = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const canonicalURL = new URL(typeof url === 'string' ? url : url.pathname, Astro.site);
+const imageURL = new URL(image, Astro.site);
 ---
 
 <head>
@@ -15,6 +25,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalURL.href} />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content={type} />
+  <meta property="og:url" content={canonicalURL.href} />
+  <meta property="og:site_name" content="How Do I AI" />
+  <meta property="og:image" content={imageURL.href} />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={imageURL.href} />
 
   <!-- Font preloads -->
   <link
