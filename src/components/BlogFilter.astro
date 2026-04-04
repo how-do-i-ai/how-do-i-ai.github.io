@@ -15,6 +15,9 @@
   <!-- Active filter chips (populated by JS) -->
   <div class="filter-chips" id="filter-chips" role="region" aria-label="Active filters"></div>
 
+  <!-- Live region for screen reader announcements -->
+  <div class="sr-only" id="filter-live" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Empty state (hidden by default) -->
   <div class="empty-state" id="empty-state" hidden>
     <p>No posts match your filters. <a href="/blog/" id="clear-filters-link">Show all posts</a></p>
@@ -58,7 +61,8 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    min-height: 44px;
     font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-text);
@@ -120,6 +124,8 @@
 
   .pagination-btn {
     padding: var(--space-2) var(--space-4);
+    min-height: 44px;
+    min-width: 44px;
     font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-text);
@@ -131,8 +137,8 @@
   }
 
   .pagination-btn:hover:not(:disabled) {
-    background-color: var(--color-accent);
-    color: #fff;
+    background-color: var(--color-surface);
+    color: var(--color-accent);
   }
 
   .pagination-btn:disabled {
@@ -150,8 +156,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2rem;
-    height: 2rem;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0 var(--space-2);
     font-size: var(--text-sm);
     font-weight: 500;
@@ -168,8 +174,10 @@
   }
 
   .pagination-page[aria-current="page"] {
-    background-color: var(--color-accent);
-    color: #fff;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    font-weight: 700;
+    border: 2px solid var(--color-accent);
     cursor: default;
   }
 
@@ -210,6 +218,8 @@
     const prevBtn = document.getElementById('pagination-prev') as HTMLButtonElement;
     const nextBtn = document.getElementById('pagination-next') as HTMLButtonElement;
     const pagesContainer = document.getElementById('pagination-pages');
+
+    const liveRegion = document.getElementById('filter-live');
 
     if (!grid || !chipsContainer || !emptyState || !pagination || !prevBtn || !nextBtn || !pagesContainer) return;
 
@@ -376,6 +386,16 @@
       emptyState!.hidden = matching.length > 0;
       renderChips(filters);
       renderPagination(matching.length, currentPage, totalPages);
+
+      // Announce results to screen readers
+      if (liveRegion && hasFilters) {
+        const msg = matching.length === 0
+          ? 'No posts match your filters.'
+          : `${matching.length} post${matching.length === 1 ? '' : 's'} found.`;
+        liveRegion.textContent = msg;
+      } else if (liveRegion) {
+        liveRegion.textContent = '';
+      }
     }
 
     // Navigation buttons
