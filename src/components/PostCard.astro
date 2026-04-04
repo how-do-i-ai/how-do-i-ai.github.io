@@ -1,0 +1,104 @@
+---
+import PillarBadge from './PillarBadge.astro';
+import SeriesBadge from './SeriesBadge.astro';
+import TagList from './TagList.astro';
+import { formatDate } from '../lib/format-date';
+import { estimateReadingTime } from '../lib/reading-time';
+
+interface Props {
+  post: {
+    id: string;
+    body?: string;
+    data: {
+      title: string;
+      description: string;
+      date: Date;
+      pillar: string;
+      series?: string;
+      tags: string[];
+      readingTime?: number;
+    };
+  };
+}
+
+const { post } = Astro.props;
+const { title, description, date, pillar, series, tags, readingTime } = post.data;
+
+const displayDate = formatDate(date);
+const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
+---
+
+<a href={`/blog/${post.id}/`} class="post-card">
+  <div class="post-card-badges">
+    <PillarBadge pillar={pillar} />
+    {series && <SeriesBadge series={series} />}
+  </div>
+
+  <h3 class="post-card-title">{title}</h3>
+
+  <p class="post-card-description">{description}</p>
+
+  <div class="post-card-meta">
+    <time datetime={date.toISOString()}>{displayDate}</time>
+    <span class="meta-separator" aria-hidden="true">&middot;</span>
+    <span>{minutes} min read</span>
+  </div>
+
+  {tags.length > 0 && <TagList tags={tags} />}
+</a>
+
+<style>
+  .post-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--color-text);
+    transition:
+      background-color var(--transition-normal),
+      box-shadow var(--transition-normal);
+  }
+
+  .post-card:hover {
+    background-color: var(--color-surface);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .post-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .post-card-title {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    line-height: var(--leading-tight);
+    color: var(--color-text);
+  }
+
+  .post-card-description {
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--color-muted);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .post-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .meta-separator {
+    user-select: none;
+  }
+</style>
