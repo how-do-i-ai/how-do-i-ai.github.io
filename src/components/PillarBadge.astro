@@ -1,0 +1,31 @@
+---
+interface Props {
+  pillar: string;
+}
+
+const PILLAR_LABELS: Record<string, string> = {
+  'ai-first-thinking': 'AI-First Thinking',
+  'ai-in-practice': 'AI in Practice',
+  'tools-and-workflows': 'Tools & Workflows',
+  'behind-the-scenes': 'Behind the Scenes',
+};
+
+const { pillar } = Astro.props;
+const label = PILLAR_LABELS[pillar] ?? pillar;
+---
+
+<span class="pillar-badge">{label}</span>
+
+<style>
+  .pillar-badge {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--color-bg);
+    background-color: var(--color-accent);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+</style>

@@ -1,0 +1,48 @@
+---
+interface Props {
+  tags: string[];
+}
+
+const MAX_VISIBLE = 3;
+const { tags } = Astro.props;
+
+const visible = tags.slice(0, MAX_VISIBLE);
+const remaining = tags.length - MAX_VISIBLE;
+---
+
+{visible.length > 0 && (
+  <ul class="tag-list" role="list">
+    {visible.map((tag) => (
+      <li class="tag-chip">{tag}</li>
+    ))}
+    {remaining > 0 && (
+      <li class="tag-chip tag-more">+{remaining} more</li>
+    )}
+  </ul>
+)}
+
+<style>
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tag-chip {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+    line-height: 1;
+    color: var(--color-muted);
+    background-color: var(--color-surface);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  .tag-more {
+    font-style: italic;
+  }
+</style>
