@@ -1,0 +1,70 @@
+---
+/**
+ * Blog post page — /blog/[slug]/
+ *
+ * Composes BaseLayout > BlogPostLayout > rendered markdown content,
+ * with PrevNextNav and RelatedPosts below the post.
+ */
+
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogPostLayout from '../../layouts/BlogPostLayout.astro';
+import PillarBadge from '../../components/PillarBadge.astro';
+import SeriesBadge from '../../components/SeriesBadge.astro';
+import PrevNextNav from '../../components/PrevNextNav.astro';
+import RelatedPosts from '../../components/RelatedPosts.astro';
+import { getPublishedPosts, getRelatedPosts } from '../../lib/posts';
+import { estimateReadingTime } from '../../lib/reading-time';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+// Compute reading time from body if not set in frontmatter.
+const readingTime =
+  post.data.readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
+
+// Build frontmatter object for BlogPostLayout, including computed reading time.
+const frontmatter = { ...post.data, readingTime };
+
+// Get chronologically sorted published posts for prev/next navigation.
+// getPublishedPosts returns newest-first, so "next" (newer) is the post
+// before the current one in the array, and "prev" (older) is the post after.
+const allPosts = await getPublishedPosts();
+const currentIndex = allPosts.findIndex((p) => p.id === post.id);
+
+// In the newest-first array: index - 1 is the next (newer) post,
+// index + 1 is the previous (older) post.
+const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
+const prevPost =
+  currentIndex >= 0 && currentIndex < allPosts.length - 1
+    ? allPosts[currentIndex + 1]
+    : undefined;
+
+// Get related posts (same-series > same-pillar, up to 3).
+const relatedPosts = await getRelatedPosts(post, 3);
+---
+
+<BaseLayout
+  title={`${post.data.title} | How Do I AI`}
+  description={post.data.description}
+  activePillar={post.data.pillar}
+>
+  <BlogPostLayout frontmatter={frontmatter} headings={headings}>
+    <div class="post-badges" slot="badges">
+      <PillarBadge pillar={post.data.pillar} />
+      {post.data.series && <SeriesBadge series={post.data.series} />}
+    </div>
+    <Content />
+  </BlogPostLayout>
+
+  <PrevNextNav prevPost={prevPost} nextPost={nextPost} />
+  <RelatedPosts posts={relatedPosts} />
+</BaseLayout>

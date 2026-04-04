@@ -36,9 +36,16 @@ export async function getPostsByTag(tag: string) {
   return posts.filter((post) => post.data.tags.includes(tag));
 }
 
-/** Get related posts (same pillar or shared tags), excluding the given post. */
+/**
+ * Get related posts, prioritising same-series > same-pillar > shared tags.
+ * Excludes the given post. Returns at most `limit` results; if fewer than
+ * `limit` qualify, returns only those (no unrelated padding).
+ */
 export async function getRelatedPosts(
-  post: { id: string; data: { pillar: Pillar; tags: string[] } },
+  post: {
+    id: string;
+    data: { pillar: Pillar; series?: Series; tags: string[] };
+  },
   limit = 3,
 ) {
   const posts = await getPublishedPosts();
@@ -47,7 +54,11 @@ export async function getRelatedPosts(
     .filter((p) => p.id !== post.id)
     .map((p) => {
       let score = 0;
+      // Same series is the strongest signal.
+      if (post.data.series && p.data.series === post.data.series) score += 4;
+      // Same pillar is the next signal.
       if (p.data.pillar === post.data.pillar) score += 2;
+      // Shared tags add incremental relevance.
       const sharedTags = p.data.tags.filter((t) =>
         post.data.tags.includes(t),
       ).length;

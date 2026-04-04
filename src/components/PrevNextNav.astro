@@ -1,0 +1,96 @@
+---
+/**
+ * PrevNextNav — Chronological previous/next post links.
+ *
+ * Shows navigation to the chronologically adjacent posts.
+ * Newest post: no "Next" link. Oldest post: no "Previous" link.
+ *
+ * Props:
+ *   prevPost — the chronologically previous (older) post, or undefined
+ *   nextPost — the chronologically next (newer) post, or undefined
+ */
+
+interface Props {
+  prevPost?: { id: string; data: { title: string } };
+  nextPost?: { id: string; data: { title: string } };
+}
+
+const { prevPost, nextPost } = Astro.props;
+
+const showNav = prevPost || nextPost;
+---
+
+{showNav && (
+  <nav class="prev-next-nav" aria-label="Post navigation">
+    <div class="prev-next-inner">
+      {prevPost ? (
+        <a href={`/blog/${prevPost.id}/`} class="nav-link nav-prev">
+          <span class="nav-label" aria-hidden="true">&larr; Previous</span>
+          <span class="nav-title">{prevPost.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+
+      {nextPost ? (
+        <a href={`/blog/${nextPost.id}/`} class="nav-link nav-next">
+          <span class="nav-label" aria-hidden="true">Next &rarr;</span>
+          <span class="nav-title">{nextPost.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+    </div>
+  </nav>
+)}
+
+<style>
+  .prev-next-nav {
+    max-width: 680px;
+    margin-inline: auto;
+    padding-inline: var(--space-6);
+    padding-block: var(--space-8);
+    border-top: 1px solid var(--color-surface);
+  }
+
+  .prev-next-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+
+  .nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    text-decoration: none;
+    max-width: 50%;
+    transition: color var(--transition-fast);
+  }
+
+  .nav-link:hover .nav-title {
+    color: var(--color-accent);
+  }
+
+  .nav-prev {
+    text-align: left;
+  }
+
+  .nav-next {
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .nav-label {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+
+  .nav-title {
+    font-size: var(--text-base);
+    color: var(--color-text);
+    line-height: var(--leading-tight);
+    transition: color var(--transition-fast);
+  }
+</style>
