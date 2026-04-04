@@ -65,6 +65,9 @@ const shouldRender = h2Headings.length >= 4;
     cursor: pointer;
     list-style: none;
     user-select: none;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .toc-summary::-webkit-details-marker {
@@ -94,6 +97,9 @@ const shouldRender = h2Headings.length >= 4;
   }
 
   .toc-item a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-size: var(--text-sm);
     color: var(--color-text);
     text-decoration: none;
