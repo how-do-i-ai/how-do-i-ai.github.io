@@ -1,0 +1,48 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content={description} />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Font preloads -->
+  <link
+    rel="preload"
+    href="/fonts/InterVariable.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+  <link
+    rel="preload"
+    href="/fonts/JetBrainsMono-Regular.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+
+  <!-- Global styles -->
+  <style>
+    @import '../styles/global.css';
+  </style>
+
+  <!-- Inline dark mode script: prevent flash of wrong theme -->
+  <script is:inline>
+    (function () {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <title>{title}</title>
+</head>

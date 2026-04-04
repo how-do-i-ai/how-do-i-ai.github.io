@@ -1,0 +1,199 @@
+---
+import { getPostsByPillar } from '../lib/posts';
+
+interface Props {
+  activePillar?: string;
+}
+
+const { activePillar } = Astro.props;
+
+const btsPosts = await getPostsByPillar('behind-the-scenes');
+const showBts = btsPosts.length > 0;
+
+const pillars = [
+  { slug: 'ai-first-thinking', label: 'AI-First Thinking' },
+  { slug: 'ai-in-practice', label: 'AI in Practice' },
+  { slug: 'tools-and-workflows', label: 'Tools & Workflows' },
+];
+
+if (showBts) {
+  pillars.push({ slug: 'behind-the-scenes', label: 'Behind the Scenes' });
+}
+---
+
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="/" class="wordmark" aria-label="How Do I AI home">
+      How Do I AI<span class="question-mark">?</span>
+    </a>
+
+    <div class="nav-links">
+      <ul class="pillar-links" role="list">
+        {pillars.map((pillar) => (
+          <li>
+            <a
+              href={`/blog/?pillar=${pillar.slug}`}
+              class:list={['pillar-link', { active: activePillar === pillar.slug }]}
+            >
+              {pillar.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <div class="nav-actions">
+        <!-- ThemeToggle placeholder (issue #5) -->
+        <div class="theme-toggle-placeholder" aria-hidden="true"></div>
+
+        <a href="/rss.xml" class="rss-icon-link" aria-label="RSS Feed">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 11a9 9 0 0 1 9 9" />
+            <path d="M4 4a16 16 0 0 1 16 16" />
+            <circle cx="5" cy="19" r="1" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<style>
+  .site-nav {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-surface);
+  }
+
+  .nav-inner {
+    max-width: 64rem;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .wordmark {
+    font-family: var(--font-sans);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .wordmark:hover {
+    color: var(--color-text);
+  }
+
+  .question-mark {
+    color: var(--color-accent);
+  }
+
+  .nav-links {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-4);
+  }
+
+  .pillar-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pillar-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pillar-link {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+  }
+
+  .pillar-link:hover {
+    color: var(--color-text);
+    background-color: var(--color-surface);
+  }
+
+  .pillar-link.active {
+    color: var(--color-accent);
+    background-color: var(--color-surface);
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle-placeholder {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .rss-icon-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .rss-icon-link:hover {
+    color: var(--color-accent);
+  }
+
+  /* Mobile: stack wordmark above scrollable pillar chips */
+  @media (max-width: 767px) {
+    .nav-inner {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .wordmark {
+      text-align: center;
+    }
+
+    .nav-links {
+      justify-content: space-between;
+    }
+
+    .pillar-links {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  /* Desktop: wordmark left, links center-right, actions far right */
+  @media (min-width: 768px) {
+    .nav-inner {
+      flex-wrap: nowrap;
+    }
+  }
+</style>
