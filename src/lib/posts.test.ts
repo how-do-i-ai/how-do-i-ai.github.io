@@ -17,20 +17,25 @@ const {
   getPostsByTag,
 } = await import('./posts');
 
+import type { PillarSlug, SeriesSlug } from './taxonomy';
+
 type TestPost = {
   id: string;
   data: {
     title: string;
     description: string;
     date: Date;
-    pillar: string;
-    series?: string;
+    pillar: PillarSlug;
+    series?: SeriesSlug;
     tags: string[];
     draft: boolean;
   };
 };
 
-function post(overrides: Partial<TestPost> & { id: string }): TestPost {
+function post(overrides: {
+  id: string;
+  data?: Partial<TestPost['data']>;
+}): TestPost {
   return {
     id: overrides.id,
     data: {
