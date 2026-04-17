@@ -269,12 +269,21 @@
       }
     }
 
-    function createChip(type: string, value: string, label: string): HTMLButtonElement {
+    function createChip(type: string, _value: string, label: string): HTMLButtonElement {
       const btn = document.createElement('button');
       btn.className = 'filter-chip';
       btn.type = 'button';
       btn.setAttribute('aria-label', `Remove ${label} filter`);
-      btn.innerHTML = `${label} <span class="filter-chip-x" aria-hidden="true">&times;</span>`;
+      // Build chip DOM explicitly: label text + × glyph in a span.
+      // Using innerHTML with a user-derived label (the tag chip passes
+      // `#${filters.tag}` straight from the URL) would allow crafted
+      // tag values in the URL to inject HTML into the chip button.
+      btn.appendChild(document.createTextNode(`${label} `));
+      const x = document.createElement('span');
+      x.className = 'filter-chip-x';
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = '\u00D7'; // ×
+      btn.appendChild(x);
       btn.addEventListener('click', () => {
         const f = getFilters();
         if (type === 'pillar') f.pillar = '';
