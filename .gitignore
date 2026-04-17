@@ -6,6 +6,12 @@ dist/
 # Astro generated types
 .astro/
 
+# Temporary scratch files
+.tmp/
+
+# Claude Code project configuration
+.claude/
+
 ## Origin: https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
 # General
 .DS_Store
