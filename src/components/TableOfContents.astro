@@ -23,29 +23,31 @@ const h2Headings = headings.filter((h) => h.depth === 2);
 const shouldRender = h2Headings.length >= 4;
 ---
 
-{shouldRender && (
-  <nav class="toc" aria-label="Table of contents">
-    <details class="toc-details" open>
-      <summary class="toc-summary">Table of contents</summary>
-      <ol class="toc-list">
-        {h2Headings.map((h) => (
-          <li class="toc-item">
-            <a href={`#${h.slug}`}>{h.text}</a>
-          </li>
-        ))}
-      </ol>
-    </details>
+{
+  shouldRender && (
+    <nav class="toc" aria-label="Table of contents">
+      <details class="toc-details" open>
+        <summary class="toc-summary">Table of contents</summary>
+        <ol class="toc-list">
+          {h2Headings.map((h) => (
+            <li class="toc-item">
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </nav>
+  )
+}
 
-    <script>
-      // Collapse TOC on mobile; leave expanded on desktop.
-      // Runs once after first paint for this page.
-      const details = document.querySelector('.toc-details');
-      if (details && window.matchMedia('(max-width: 767px)').matches) {
-        details.removeAttribute('open');
-      }
-    </script>
-  </nav>
-)}
+<script>
+  // Collapse TOC on mobile; leave expanded on desktop.
+  // No-ops on pages without a .toc-details element.
+  const details = document.querySelector('.toc-details');
+  if (details && window.matchMedia('(max-width: 767px)').matches) {
+    details.removeAttribute('open');
+  }
+</script>
 
 <style>
   .toc {

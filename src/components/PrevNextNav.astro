@@ -20,29 +20,35 @@ const { prevPost, nextPost } = Astro.props;
 const showNav = prevPost || nextPost;
 ---
 
-{showNav && (
-  <nav class="prev-next-nav" aria-label="Post navigation">
-    <div class="prev-next-inner">
-      {prevPost ? (
-        <a href={`/blog/${prevPost.id}/`} class="nav-link nav-prev">
-          <span class="nav-label" aria-hidden="true">&larr; Previous</span>
-          <span class="nav-title">{prevPost.data.title}</span>
-        </a>
-      ) : (
-        <span />
-      )}
+{
+  showNav && (
+    <nav class="prev-next-nav" aria-label="Post navigation">
+      <div class="prev-next-inner">
+        {prevPost ? (
+          <a href={`/blog/${prevPost.id}/`} class="nav-link nav-prev">
+            <span class="nav-label" aria-hidden="true">
+              &larr; Previous
+            </span>
+            <span class="nav-title">{prevPost.data.title}</span>
+          </a>
+        ) : (
+          <span />
+        )}
 
-      {nextPost ? (
-        <a href={`/blog/${nextPost.id}/`} class="nav-link nav-next">
-          <span class="nav-label" aria-hidden="true">Next &rarr;</span>
-          <span class="nav-title">{nextPost.data.title}</span>
-        </a>
-      ) : (
-        <span />
-      )}
-    </div>
-  </nav>
-)}
+        {nextPost ? (
+          <a href={`/blog/${nextPost.id}/`} class="nav-link nav-next">
+            <span class="nav-label" aria-hidden="true">
+              Next &rarr;
+            </span>
+            <span class="nav-title">{nextPost.data.title}</span>
+          </a>
+        ) : (
+          <span />
+        )}
+      </div>
+    </nav>
+  )
+}
 
 <style>
   .prev-next-nav {

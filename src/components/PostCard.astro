@@ -22,7 +22,8 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { title, description, date, pillar, series, tags, readingTime } = post.data;
+const { title, description, date, pillar, series, tags, readingTime } =
+  post.data;
 
 const displayDate = formatDate(date);
 const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);

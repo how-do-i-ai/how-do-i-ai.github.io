@@ -17,7 +17,13 @@ const { title, description, image, url, type, activePillar } = Astro.props;
 
 <!doctype html>
 <html lang="en">
-  <BaseHead title={title} description={description} image={image} url={url} type={type} />
+  <BaseHead
+    title={title}
+    description={description}
+    image={image}
+    url={url}
+    type={type}
+  />
   <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
     <header>

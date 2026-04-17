@@ -13,14 +13,25 @@
 
 <div class="blog-filter" id="blog-filter">
   <!-- Active filter chips (populated by JS) -->
-  <div class="filter-chips" id="filter-chips" role="region" aria-label="Active filters"></div>
+  <div
+    class="filter-chips"
+    id="filter-chips"
+    role="region"
+    aria-label="Active filters"
+  >
+  </div>
 
   <!-- Live region for screen reader announcements -->
-  <div class="sr-only" id="filter-live" aria-live="polite" aria-atomic="true"></div>
+  <div class="sr-only" id="filter-live" aria-live="polite" aria-atomic="true">
+  </div>
 
   <!-- Empty state (hidden by default) -->
   <div class="empty-state" id="empty-state" hidden>
-    <p>No posts match your filters. <a href="/blog/" id="clear-filters-link">Show all posts</a></p>
+    <p>
+      No posts match your filters. <a href="/blog/" id="clear-filters-link"
+        >Show all posts</a
+      >
+    </p>
   </div>
 
   <!-- Post grid (server-rendered cards are slotted here) -->
@@ -30,7 +41,12 @@
 
   <!-- Pagination controls -->
   <nav class="pagination" id="pagination" aria-label="Blog pagination" hidden>
-    <button class="pagination-btn" id="pagination-prev" aria-label="Previous page" disabled>
+    <button
+      class="pagination-btn"
+      id="pagination-prev"
+      aria-label="Previous page"
+      disabled
+    >
       Previous
     </button>
     <div class="pagination-pages" id="pagination-pages"></div>
@@ -141,7 +157,9 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast);
   }
 
   .pagination-btn:hover:not(:disabled) {
@@ -174,14 +192,16 @@
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast);
   }
 
   .pagination-page:hover {
     background-color: var(--color-surface);
   }
 
-  .pagination-page[aria-current="page"] {
+  .pagination-page[aria-current='page'] {
     background-color: var(--color-surface);
     color: var(--color-text);
     font-weight: 700;
@@ -214,15 +234,30 @@
     const chipsContainer = document.getElementById('filter-chips');
     const emptyState = document.getElementById('empty-state');
     const pagination = document.getElementById('pagination');
-    const prevBtn = document.getElementById('pagination-prev') as HTMLButtonElement;
-    const nextBtn = document.getElementById('pagination-next') as HTMLButtonElement;
+    const prevBtn = document.getElementById(
+      'pagination-prev',
+    ) as HTMLButtonElement;
+    const nextBtn = document.getElementById(
+      'pagination-next',
+    ) as HTMLButtonElement;
     const pagesContainer = document.getElementById('pagination-pages');
 
     const liveRegion = document.getElementById('filter-live');
 
-    if (!grid || !chipsContainer || !emptyState || !pagination || !prevBtn || !nextBtn || !pagesContainer) return;
+    if (
+      !grid ||
+      !chipsContainer ||
+      !emptyState ||
+      !pagination ||
+      !prevBtn ||
+      !nextBtn ||
+      !pagesContainer
+    )
+      return;
 
-    const allCards = Array.from(grid.querySelectorAll<HTMLElement>('[data-pillar]'));
+    const allCards = Array.from(
+      grid.querySelectorAll<HTMLElement>('[data-pillar]'),
+    );
 
     function getFilters() {
       const params = new URLSearchParams(window.location.search);
@@ -234,41 +269,78 @@
       };
     }
 
-    function setFilters(filters: { pillar: string; series: string; tag: string; page: number }) {
+    function setFilters(filters: {
+      pillar: string;
+      series: string;
+      tag: string;
+      page: number;
+    }) {
       const params = new URLSearchParams();
       if (filters.pillar) params.set('pillar', filters.pillar);
       if (filters.series) params.set('series', filters.series);
       if (filters.tag) params.set('tag', filters.tag);
       if (filters.page > 1) params.set('page', String(filters.page));
       const qs = params.toString();
-      const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      const url = qs
+        ? `${window.location.pathname}?${qs}`
+        : window.location.pathname;
       history.replaceState(null, '', url);
     }
 
-    function matchesFilter(card: HTMLElement, filters: { pillar: string; series: string; tag: string }) {
-      if (filters.pillar && card.dataset.pillar !== filters.pillar) return false;
-      if (filters.series && card.dataset.series !== filters.series) return false;
+    function matchesFilter(
+      card: HTMLElement,
+      filters: { pillar: string; series: string; tag: string },
+    ) {
+      if (filters.pillar && card.dataset.pillar !== filters.pillar)
+        return false;
+      if (filters.series && card.dataset.series !== filters.series)
+        return false;
       if (filters.tag) {
-        const tags = (card.dataset.tags || '').split(',').map((t) => t.trim()).filter(Boolean);
+        const tags = (card.dataset.tags || '')
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
         if (!tags.includes(filters.tag)) return false;
       }
       return true;
     }
 
-    function renderChips(filters: { pillar: string; series: string; tag: string }) {
+    function renderChips(filters: {
+      pillar: string;
+      series: string;
+      tag: string;
+    }) {
       chipsContainer!.innerHTML = '';
       if (filters.pillar) {
-        chipsContainer!.appendChild(createChip('pillar', filters.pillar, PILLAR_LABELS[filters.pillar] || filters.pillar));
+        chipsContainer!.appendChild(
+          createChip(
+            'pillar',
+            filters.pillar,
+            PILLAR_LABELS[filters.pillar] || filters.pillar,
+          ),
+        );
       }
       if (filters.series) {
-        chipsContainer!.appendChild(createChip('series', filters.series, SERIES_LABELS[filters.series] || filters.series));
+        chipsContainer!.appendChild(
+          createChip(
+            'series',
+            filters.series,
+            SERIES_LABELS[filters.series] || filters.series,
+          ),
+        );
       }
       if (filters.tag) {
-        chipsContainer!.appendChild(createChip('tag', filters.tag, `#${filters.tag}`));
+        chipsContainer!.appendChild(
+          createChip('tag', filters.tag, `#${filters.tag}`),
+        );
       }
     }
 
-    function createChip(type: string, _value: string, label: string): HTMLButtonElement {
+    function createChip(
+      type: string,
+      _value: string,
+      label: string,
+    ): HTMLButtonElement {
       const btn = document.createElement('button');
       btn.className = 'filter-chip';
       btn.type = 'button';
@@ -295,7 +367,11 @@
       return btn;
     }
 
-    function renderPagination(visibleCount: number, currentPage: number, totalPages: number) {
+    function renderPagination(
+      visibleCount: number,
+      currentPage: number,
+      totalPages: number,
+    ) {
       if (totalPages <= 1) {
         pagination!.hidden = true;
         return;
@@ -335,7 +411,10 @@
       }
     }
 
-    function computePageNumbers(current: number, total: number): (number | '...')[] {
+    function computePageNumbers(
+      current: number,
+      total: number,
+    ): (number | '...')[] {
       if (total <= 7) {
         return Array.from({ length: total }, (_, i) => i + 1);
       }
@@ -373,7 +452,10 @@
       }
 
       // Paginate
-      const totalPages = Math.max(1, Math.ceil(matching.length / POSTS_PER_PAGE));
+      const totalPages = Math.max(
+        1,
+        Math.ceil(matching.length / POSTS_PER_PAGE),
+      );
       const currentPage = Math.min(Math.max(1, filters.page), totalPages);
       if (currentPage !== filters.page) {
         filters.page = currentPage;
@@ -397,9 +479,10 @@
 
       // Announce results to screen readers
       if (liveRegion && hasFilters) {
-        const msg = matching.length === 0
-          ? 'No posts match your filters.'
-          : `${matching.length} post${matching.length === 1 ? '' : 's'} found.`;
+        const msg =
+          matching.length === 0
+            ? 'No posts match your filters.'
+            : `${matching.length} post${matching.length === 1 ? '' : 's'} found.`;
         liveRegion.textContent = msg;
       } else if (liveRegion) {
         liveRegion.textContent = '';

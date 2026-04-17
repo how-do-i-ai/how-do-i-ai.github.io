@@ -15,7 +15,10 @@ const {
   type = 'website',
 } = Astro.props;
 
-const canonicalURL = new URL(typeof url === 'string' ? url : url.pathname, Astro.site);
+const canonicalURL = new URL(
+  typeof url === 'string' ? url : url.pathname,
+  Astro.site,
+);
 const imageURL = new URL(image, Astro.site);
 ---
 
@@ -79,8 +82,11 @@ const imageURL = new URL(image, Astro.site);
   <!-- Inline dark mode script: prevent flash of wrong theme -->
   <script is:inline>
     (function () {
-      var t = localStorage.getItem('theme');
-      if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches)) {
+      const t = localStorage.getItem('theme');
+      if (
+        t === 'dark' ||
+        (!t && matchMedia('(prefers-color-scheme:dark)').matches)
+      ) {
         document.documentElement.classList.add('dark');
       }
     })();

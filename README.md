@@ -36,16 +36,16 @@ public/
 
 Blog posts live in `src/content/blog/{slug}.md`. Frontmatter is validated by the schema in `src/content.config.ts`:
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `title` | yes | Post title |
-| `description` | yes | Short summary for meta/OG/cards |
-| `date` | yes | Publication date (ISO 8601) |
-| `pillar` | yes | One of the pillar slugs below |
-| `series` | no | One of the series slugs below |
-| `tags` | no | Array of strings; default `[]` |
-| `readingTime` | no | Integer minutes; auto-estimated if omitted |
-| `draft` | no | `true` to exclude from build; default `false` |
+| Field         | Required | Notes                                         |
+| ------------- | -------- | --------------------------------------------- |
+| `title`       | yes      | Post title                                    |
+| `description` | yes      | Short summary for meta/OG/cards               |
+| `date`        | yes      | Publication date (ISO 8601)                   |
+| `pillar`      | yes      | One of the pillar slugs below                 |
+| `series`      | no       | One of the series slugs below                 |
+| `tags`        | no       | Array of strings; default `[]`                |
+| `readingTime` | no       | Integer minutes; auto-estimated if omitted    |
+| `draft`       | no       | `true` to exclude from build; default `false` |
 
 Valid pillars: `ai-first-thinking`, `ai-in-practice`, `tools-and-workflows`, `behind-the-scenes`.
 
