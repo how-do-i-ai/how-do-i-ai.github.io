@@ -17,7 +17,7 @@ import { getPublishedPosts, getRelatedPosts } from '../../lib/posts';
 import { estimateReadingTime } from '../../lib/reading-time';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
   return posts.map((post) => ({
     params: { id: post.id },
     props: { post },
