@@ -194,21 +194,12 @@
 </style>
 
 <script>
+  import { PILLARS, SERIES } from '../lib/taxonomy';
+
   const POSTS_PER_PAGE = 12;
 
-  const PILLAR_LABELS: Record<string, string> = {
-    'ai-first-thinking': 'AI-First Thinking',
-    'ai-in-practice': 'AI in Practice',
-    'tools-and-workflows': 'Tools & Workflows',
-    'behind-the-scenes': 'Behind the Scenes',
-  };
-
-  const SERIES_LABELS: Record<string, string> = {
-    'ai-at-home': 'AI at Home',
-    'ai-at-work': 'AI at Work',
-    'ai-for-gigs': 'AI for Gigs',
-    'ai-mindset': 'AI Mindset',
-  };
+  const PILLAR_LABELS: Record<string, string> = PILLARS;
+  const SERIES_LABELS: Record<string, string> = SERIES;
 
   function init() {
     const grid = document.getElementById('post-grid');

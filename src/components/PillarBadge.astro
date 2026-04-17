@@ -1,17 +1,12 @@
 ---
+import { PILLARS, type PillarSlug } from '../lib/taxonomy';
+
 interface Props {
-  pillar: string;
+  pillar: PillarSlug | string;
 }
 
-const PILLAR_LABELS: Record<string, string> = {
-  'ai-first-thinking': 'AI-First Thinking',
-  'ai-in-practice': 'AI in Practice',
-  'tools-and-workflows': 'Tools & Workflows',
-  'behind-the-scenes': 'Behind the Scenes',
-};
-
 const { pillar } = Astro.props;
-const label = PILLAR_LABELS[pillar] ?? pillar;
+const label = (PILLARS as Record<string, string>)[pillar] ?? pillar;
 ---
 
 <span class="pillar-badge">{label}</span>

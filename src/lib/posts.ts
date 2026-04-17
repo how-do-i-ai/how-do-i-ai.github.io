@@ -1,12 +1,8 @@
 import { getCollection } from 'astro:content';
+import type { PillarSlug, SeriesSlug } from './taxonomy';
 
-type Pillar =
-  | 'ai-first-thinking'
-  | 'ai-in-practice'
-  | 'tools-and-workflows'
-  | 'behind-the-scenes';
-
-type Series = 'ai-at-home' | 'ai-at-work' | 'ai-for-gigs' | 'ai-mindset';
+type Pillar = PillarSlug;
+type Series = SeriesSlug;
 
 function sortByDateDesc<T extends { data: { date: Date } }>(posts: T[]): T[] {
   return posts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
