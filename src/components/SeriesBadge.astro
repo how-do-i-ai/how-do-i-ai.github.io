@@ -1,17 +1,12 @@
 ---
+import { SERIES, type SeriesSlug } from '../lib/taxonomy';
+
 interface Props {
-  series: string;
+  series: SeriesSlug | string;
 }
 
-const SERIES_LABELS: Record<string, string> = {
-  'ai-at-home': 'AI at Home',
-  'ai-at-work': 'AI at Work',
-  'ai-for-gigs': 'AI for Gigs',
-  'ai-mindset': 'AI Mindset',
-};
-
 const { series } = Astro.props;
-const label = SERIES_LABELS[series] ?? series;
+const label = (SERIES as Record<string, string>)[series] ?? series;
 ---
 
 <span class="series-badge">{label}</span>

@@ -1,6 +1,7 @@
 ---
 import { getPostsByPillar } from '../lib/posts';
 import ThemeToggle from './ThemeToggle.astro';
+import { PILLARS } from '../lib/taxonomy';
 
 interface Props {
   activePillar?: string;
@@ -11,15 +12,11 @@ const { activePillar } = Astro.props;
 const btsPosts = await getPostsByPillar('behind-the-scenes');
 const showBts = btsPosts.length > 0;
 
-const pillars = [
-  { slug: 'ai-first-thinking', label: 'AI-First Thinking' },
-  { slug: 'ai-in-practice', label: 'AI in Practice' },
-  { slug: 'tools-and-workflows', label: 'Tools & Workflows' },
-];
-
-if (showBts) {
-  pillars.push({ slug: 'behind-the-scenes', label: 'Behind the Scenes' });
-}
+// Nav surfaces all pillars except Behind-the-Scenes, which only shows
+// once there is at least one published post in that pillar.
+const pillars = Object.entries(PILLARS)
+  .filter(([slug]) => slug !== 'behind-the-scenes' || showBts)
+  .map(([slug, label]) => ({ slug, label }));
 ---
 
 <nav class="site-nav" aria-label="Main navigation">
