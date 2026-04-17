@@ -122,6 +122,14 @@
     flex-wrap: wrap;
   }
 
+  /* Honor the [hidden] HTML attribute regardless of the display value
+     above. Without this, the UA rule `[hidden] { display: none }` is
+     overridden by `.pagination { display: flex }`, producing a flash of
+     the Previous/Next buttons before init() runs and hides them. */
+  .pagination[hidden] {
+    display: none;
+  }
+
   .pagination-btn {
     padding: var(--space-2) var(--space-4);
     min-height: 44px;
