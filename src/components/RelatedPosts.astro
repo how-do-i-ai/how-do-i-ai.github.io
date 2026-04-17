@@ -30,18 +30,20 @@ interface Props {
 const { posts } = Astro.props;
 ---
 
-{posts.length > 0 && (
-  <aside class="related-posts" aria-label="Related posts">
-    <div class="related-posts-inner">
-      <h2 class="related-heading">Related Posts</h2>
-      <div class="related-grid">
-        {posts.map((post) => (
-          <PostCard post={post} />
-        ))}
+{
+  posts.length > 0 && (
+    <aside class="related-posts" aria-label="Related posts">
+      <div class="related-posts-inner">
+        <h2 class="related-heading">Related Posts</h2>
+        <div class="related-grid">
+          {posts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
       </div>
-    </div>
-  </aside>
-)}
+    </aside>
+  )
+}
 
 <style>
   .related-posts {

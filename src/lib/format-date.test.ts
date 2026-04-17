@@ -17,8 +17,18 @@ describe('formatDate', () => {
 
   it('handles all twelve months', () => {
     const expected = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     expected.forEach((abbr, i) => {
       expect(formatDate(new Date(2026, i, 1))).toBe(`${abbr} 1, 2026`);

@@ -13,34 +13,44 @@ const hasPosts = posts.length > 0;
 
 <BaseLayout title="How Do I AI" description="AI first. For all of it.">
   <section class="hero" aria-label="Introduction">
-    <h1 class="hero-brand">How Do I AI<span class="hero-question-mark">?</span></h1>
+    <h1 class="hero-brand">
+      How Do I AI<span class="hero-question-mark">?</span>
+    </h1>
     <p class="hero-tagline">AI first. For all of it.</p>
     <p class="hero-descriptor">Real workflows. Honest takes. No hype.</p>
   </section>
 
-  {featuredPost && (
-    <section class="featured" aria-label="Featured post">
-      <h2 class="section-heading">Latest</h2>
-      <PostCardFeatured post={featuredPost} />
-    </section>
-  )}
+  {
+    featuredPost && (
+      <section class="featured" aria-label="Featured post">
+        <h2 class="section-heading">Latest</h2>
+        <PostCardFeatured post={featuredPost} />
+      </section>
+    )
+  }
 
-  {showRecentGrid && (
-    <section class="recent" aria-label="Recent posts">
-      <h2 class="section-heading">Recent</h2>
-      <div class="recent-grid">
-        {recentPosts.map((post) => (
-          <PostCard post={post} />
-        ))}
+  {
+    showRecentGrid && (
+      <section class="recent" aria-label="Recent posts">
+        <h2 class="section-heading">Recent</h2>
+        <div class="recent-grid">
+          {recentPosts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    hasPosts && (
+      <div class="cta">
+        <a href="/blog/" class="cta-link">
+          See all posts &rarr;
+        </a>
       </div>
-    </section>
-  )}
-
-  {hasPosts && (
-    <div class="cta">
-      <a href="/blog/" class="cta-link">See all posts &rarr;</a>
-    </div>
-  )}
+    )
+  }
 </BaseLayout>
 
 <style>

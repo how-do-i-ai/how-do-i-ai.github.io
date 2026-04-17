@@ -10,16 +10,16 @@ const visible = tags.slice(0, MAX_VISIBLE);
 const remaining = tags.length - MAX_VISIBLE;
 ---
 
-{visible.length > 0 && (
-  <ul class="tag-list" role="list">
-    {visible.map((tag) => (
-      <li class="tag-chip">{tag}</li>
-    ))}
-    {remaining > 0 && (
-      <li class="tag-chip tag-more">+{remaining} more</li>
-    )}
-  </ul>
-)}
+{
+  visible.length > 0 && (
+    <ul class="tag-list" role="list">
+      {visible.map((tag) => (
+        <li class="tag-chip">{tag}</li>
+      ))}
+      {remaining > 0 && <li class="tag-chip tag-more">+{remaining} more</li>}
+    </ul>
+  )
+}
 
 <style>
   .tag-list {

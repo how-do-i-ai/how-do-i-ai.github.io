@@ -80,11 +80,19 @@ describe('getPostsByPillar / getPostsBySeries / getPostsByTag', () => {
     getCollectionMock.mockImplementation(async () => [
       post({
         id: 'p1',
-        data: { pillar: 'ai-in-practice', series: 'ai-at-work', tags: ['llms'] },
+        data: {
+          pillar: 'ai-in-practice',
+          series: 'ai-at-work',
+          tags: ['llms'],
+        },
       }),
       post({
         id: 'p2',
-        data: { pillar: 'tools-and-workflows', series: 'ai-for-gigs', tags: ['ide'] },
+        data: {
+          pillar: 'tools-and-workflows',
+          series: 'ai-for-gigs',
+          tags: ['ide'],
+        },
       }),
       post({
         id: 'p3',
