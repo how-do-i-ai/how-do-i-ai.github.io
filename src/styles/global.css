@@ -29,13 +29,13 @@
 
 :root {
   /* Colors */
-  --color-bg: #FAFAF9;
-  --color-text: #1E1E1E;
-  --color-accent: #E85D2A;
-  --color-surface: #F5F3EF;
-  --color-muted: #6B7280;
-  --color-teal: #2AAFAA;
-  --color-amber: #F5A623;
+  --color-bg: #fafaf9;
+  --color-text: #1e1e1e;
+  --color-accent: #e85d2a;
+  --color-surface: #f5f3ef;
+  --color-muted: #6b7280;
+  --color-teal: #2aafaa;
+  --color-amber: #f5a623;
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -81,13 +81,13 @@
    -------------------------------------------------------------------------- */
 
 :root.dark {
-  --color-bg: #2A2A2A;
-  --color-text: #EDEDED;
-  --color-accent: #F06937;
+  --color-bg: #2a2a2a;
+  --color-text: #ededed;
+  --color-accent: #f06937;
   --color-surface: #363636;
-  --color-muted: #9CA3AF;
-  --color-teal: #3CC4BE;
-  --color-amber: #D4911E;
+  --color-muted: #9ca3af;
+  --color-teal: #3cc4be;
+  --color-amber: #d4911e;
 }
 
 /* --------------------------------------------------------------------------

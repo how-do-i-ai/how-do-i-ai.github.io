@@ -7,24 +7,31 @@ import { getPublishedPosts } from '../../lib/posts';
 const posts = await getPublishedPosts();
 ---
 
-<BaseLayout title="Blog — How Do I AI" description="All posts from How Do I AI, sorted by date. Filter by pillar, series, or tag.">
+<BaseLayout
+  title="Blog — How Do I AI"
+  description="All posts from How Do I AI, sorted by date. Filter by pillar, series, or tag."
+>
   <section class="blog-index">
     <div class="blog-header">
       <h1>Blog</h1>
-      <p class="blog-subtitle">Explore all posts — filter by pillar, series, or tag.</p>
+      <p class="blog-subtitle">
+        Explore all posts — filter by pillar, series, or tag.
+      </p>
     </div>
 
     <BlogFilter>
-      {posts.map((post) => (
-        <div
-          class="post-card-wrapper"
-          data-pillar={post.data.pillar}
-          data-series={post.data.series || ''}
-          data-tags={post.data.tags.join(',')}
-        >
-          <PostCard post={post} />
-        </div>
-      ))}
+      {
+        posts.map((post) => (
+          <div
+            class="post-card-wrapper"
+            data-pillar={post.data.pillar}
+            data-series={post.data.series || ''}
+            data-tags={post.data.tags.join(',')}
+          >
+            <PostCard post={post} />
+          </div>
+        ))
+      }
     </BlogFilter>
   </section>
 </BaseLayout>

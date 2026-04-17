@@ -30,16 +30,21 @@ if (showBts) {
 
     <div class="nav-links">
       <ul class="pillar-links" role="list">
-        {pillars.map((pillar) => (
-          <li>
-            <a
-              href={`/blog/?pillar=${pillar.slug}`}
-              class:list={['pillar-link', { active: activePillar === pillar.slug }]}
-            >
-              {pillar.label}
-            </a>
-          </li>
-        ))}
+        {
+          pillars.map((pillar) => (
+            <li>
+              <a
+                href={`/blog/?pillar=${pillar.slug}`}
+                class:list={[
+                  'pillar-link',
+                  { active: activePillar === pillar.slug },
+                ]}
+              >
+                {pillar.label}
+              </a>
+            </li>
+          ))
+        }
       </ul>
 
       <div class="nav-actions">
@@ -58,9 +63,9 @@ if (showBts) {
             stroke-linejoin="round"
             aria-hidden="true"
           >
-            <path d="M4 11a9 9 0 0 1 9 9" />
-            <path d="M4 4a16 16 0 0 1 16 16" />
-            <circle cx="5" cy="19" r="1" />
+            <path d="M4 11a9 9 0 0 1 9 9"></path>
+            <path d="M4 4a16 16 0 0 1 16 16"></path>
+            <circle cx="5" cy="19" r="1"></circle>
           </svg>
         </a>
       </div>
@@ -133,7 +138,9 @@ if (showBts) {
     color: var(--color-muted);
     text-decoration: none;
     white-space: nowrap;
-    transition: color var(--transition-fast), background-color var(--transition-fast);
+    transition:
+      color var(--transition-fast),
+      background-color var(--transition-fast);
   }
 
   .pillar-link:hover {

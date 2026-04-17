@@ -39,18 +39,26 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
     <slot name="badges" />
     <h1 class="post-title">{frontmatter.title}</h1>
 
-    {frontmatter.description && (
-      <p class="post-description">{frontmatter.description}</p>
-    )}
+    {
+      frontmatter.description && (
+        <p class="post-description">{frontmatter.description}</p>
+      )
+    }
 
     <div class="post-meta">
       <time datetime={new Date(frontmatter.date).toISOString()}>
         {formattedDate}
       </time>
-      {frontmatter.readingTime && (
-        <span class="post-meta-sep" aria-hidden="true">&middot;</span>
-        <span>{frontmatter.readingTime} min read</span>
-      )}
+      {
+        frontmatter.readingTime && (
+          <>
+            <span class="post-meta-sep" aria-hidden="true">
+              &middot;
+            </span>
+            <span>{frontmatter.readingTime} min read</span>
+          </>
+        )
+      }
     </div>
   </header>
 
@@ -177,7 +185,9 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
     color: var(--color-accent);
     text-decoration: none;
     text-underline-offset: 0.15em;
-    transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+    transition:
+      color var(--transition-fast),
+      text-decoration-color var(--transition-fast);
   }
 
   .prose :global(a:hover) {
