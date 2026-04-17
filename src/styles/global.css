@@ -74,6 +74,10 @@
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
+
+  /* Shadows — card hover elevation */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-featured: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* --------------------------------------------------------------------------
@@ -88,6 +92,10 @@
   --color-muted: #9CA3AF;
   --color-teal: #3CC4BE;
   --color-amber: #D4911E;
+
+  /* Shadows — darker base for visibility on dark surfaces */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-card-featured: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* --------------------------------------------------------------------------
