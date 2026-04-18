@@ -105,19 +105,34 @@ const pillars = Object.entries(PILLARS)
   }
 
   /*
-    Pre-rasterized PNG, not inline SVG — see hq/brand/visual-identity.md
-    rasterization rule: small-size SVG rasterization in browsers produces
-    aliased edges, so all logo placements use Lanczos downscales from the
-    8K PNG master. Theme variant tracks .dark class (set pre-paint by
-    BaseHead inline script); both variants preloaded in BaseHead.
+    Pre-rasterized PNG, not inline SVG — small-size SVG rasterization in
+    browsers produces aliased edges, so all logo placements use Lanczos
+    downscales from the 8K PNG master per brand HQ convention. Asset
+    provenance + the rasterization rule reference live in
+    public/brand/SOURCE.md. Theme variant tracks .dark class (set
+    pre-paint by BaseHead inline script); both variants preloaded in
+    BaseHead.
   */
   .nav-mark {
     display: inline-block;
     width: 32px;
     height: 32px;
     flex-shrink: 0;
-    /* Fallback for browsers without unprefixed image-set() (Safari ≤16, Chrome <113) */
+    /*
+      Three layers of progressive enhancement:
+      1. url() — single 1x PNG; works everywhere including Safari ≤16,
+         Chrome <113, but no HiDPI selection.
+      2. -webkit-image-set() — older WebKit/Blink that only supports the
+         prefixed form gets HiDPI variant selection.
+      3. image-set() — modern unprefixed (Safari 17+, Chrome 113+).
+      Browsers parse each in order and use the last one they understand.
+    */
     background-image: url('/brand/nav-mark-light.png');
+    background-image: -webkit-image-set(
+      url('/brand/nav-mark-light.png') 1x,
+      url('/brand/nav-mark-light@2x.png') 2x,
+      url('/brand/nav-mark-light@3x.png') 3x
+    );
     background-image: image-set(
       url('/brand/nav-mark-light.png') 1x,
       url('/brand/nav-mark-light@2x.png') 2x,
@@ -130,6 +145,11 @@ const pillars = Object.entries(PILLARS)
 
   :global(:root.dark) .nav-mark {
     background-image: url('/brand/nav-mark-dark.png');
+    background-image: -webkit-image-set(
+      url('/brand/nav-mark-dark.png') 1x,
+      url('/brand/nav-mark-dark@2x.png') 2x,
+      url('/brand/nav-mark-dark@3x.png') 3x
+    );
     background-image: image-set(
       url('/brand/nav-mark-dark.png') 1x,
       url('/brand/nav-mark-dark@2x.png') 2x,
