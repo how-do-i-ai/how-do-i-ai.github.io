@@ -95,6 +95,27 @@ const organizationSchema = Astro.site
     crossorigin
   />
 
+  <!--
+    Nav brand mark preloads. Both theme variants are preloaded
+    unconditionally because the .dark class is runtime state (set by the
+    inline script below from localStorage / prefers-color-scheme), so the
+    correct variant cannot be determined at HTML response time. Without
+    this, the first theme toggle of a session fetches the inactive
+    variant and visibly flashes during the swap.
+  -->
+  <link
+    rel="preload"
+    as="image"
+    href="/brand/nav-mark-light.png"
+    imagesrcset="/brand/nav-mark-light.png 1x, /brand/nav-mark-light@2x.png 2x, /brand/nav-mark-light@3x.png 3x"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="/brand/nav-mark-dark.png"
+    imagesrcset="/brand/nav-mark-dark.png 1x, /brand/nav-mark-dark@2x.png 2x, /brand/nav-mark-dark@3x.png 3x"
+  />
+
   <!-- Global styles -->
   <style is:global>
     @import '../styles/global.css';

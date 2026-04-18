@@ -22,35 +22,7 @@ const pillars = Object.entries(PILLARS)
 <nav class="site-nav" aria-label="Main navigation">
   <div class="nav-inner">
     <a href="/" class="wordmark" aria-label="How Do I AI home">
-      <svg
-        class="nav-mark"
-        xmlns="http://www.w3.org/2000/svg"
-        width="32"
-        height="32"
-        viewBox="0 0 8192 8192"
-        aria-hidden="true"
-      >
-        <style>
-          .nav-mark-ai {
-            fill: var(--color-text);
-          }
-          .nav-mark-q {
-            fill: var(--color-accent);
-          }
-        </style>
-        <path
-          class="nav-mark-ai"
-          d="M4308.42,2691.55c-22.69-60.12-43.08-115.47-61.53-166.88-263.34,348.82-530.29,775.94-647.16,1192.15-157.13,559.58-37.2,1053.5,74.64,1344.95l130.99,276.37h-1370.68c107.53-231.77,448.37-1250.94,555.9-1482.7,538.86-1423.34,362.74-2455.7-599.65-2738.7-36.46,211.44-102.07,430.16-233.31,787.41L349.48,7080.65C174.5,7576.43,108.89,7751.41-.48,7970.14h1863.12c36.45-269.74,87.49-495.74,182.25-787.34l196.84-619.66h1763.83l196.84,619.66c72.9,247.87,116.64,437.41,174.96,787.34h1863.12c-94.78-204.15-211.44-503.07-349.96-889.48l-1582.12-4389.11Z"
-        ></path>
-        <path
-          class="nav-mark-ai"
-          d="M6995.72,4982.83c0-475.83,13.04-697.45,52.16-964.7h-1591.32c39.12,286.8,52.15,475.83,52.15,964.7v503.06l575.05,1594.89c138.54,386.35,255.2,685.23,350,889.35h614.12c-39.12-273.76-52.16-514.93-52.16-964.69v-2022.61Z"
-        ></path>
-        <path
-          class="nav-mark-q"
-          d="M6299.8,3839.14c-558.52,0-920.57-592.36-662.54-1087.7,19.7-37.82,40.84-70.32,63.5-95.81,158.6-170.82,211.46-207.43,680.64-469.75,323.79-176.92,429.52-305.04,429.52-506.36,0-286.74-231.28-457.56-627.77-457.56-297.37,0-515.44,97.61-640.98,286.74-66.09,97.61-92.52,183.01-118.95,372.14l-577.19-51.73c-490.06-43.92-711.22-636.74-368.63-989.9,2.48-2.56,4.98-5.12,7.49-7.68,383.25-402.63,971.38-610.06,1731.31-610.06,1215.89,0,1975.81,530.75,1975.81,1372.64,0,372.14-132.15,658.88-409.7,896.8-158.58,134.22-224.67,176.92-799.58,506.36-277.53,164.73-376.65,323.34-376.65,603.97,0,73.21,6.61,140.31,19.82,237.92h-326.1Z"
-        ></path>
-      </svg>
+      <span class="nav-mark" aria-hidden="true"></span>
       <span class="wordmark-text"
         >How Do I AI<span class="question-mark">?</span></span
       >
@@ -132,8 +104,37 @@ const pillars = Object.entries(PILLARS)
     color: var(--color-text);
   }
 
+  /*
+    Pre-rasterized PNG, not inline SVG — see hq/brand/visual-identity.md
+    rasterization rule: small-size SVG rasterization in browsers produces
+    aliased edges, so all logo placements use Lanczos downscales from the
+    8K PNG master. Theme variant tracks .dark class (set pre-paint by
+    BaseHead inline script); both variants preloaded in BaseHead.
+  */
   .nav-mark {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
+    /* Fallback for browsers without unprefixed image-set() (Safari ≤16, Chrome <113) */
+    background-image: url('/brand/nav-mark-light.png');
+    background-image: image-set(
+      url('/brand/nav-mark-light.png') 1x,
+      url('/brand/nav-mark-light@2x.png') 2x,
+      url('/brand/nav-mark-light@3x.png') 3x
+    );
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  :global(:root.dark) .nav-mark {
+    background-image: url('/brand/nav-mark-dark.png');
+    background-image: image-set(
+      url('/brand/nav-mark-dark.png') 1x,
+      url('/brand/nav-mark-dark@2x.png') 2x,
+      url('/brand/nav-mark-dark@3x.png') 3x
+    );
   }
 
   .question-mark {

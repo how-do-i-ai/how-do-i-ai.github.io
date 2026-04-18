@@ -21,6 +21,29 @@ and the update workflow, see [`CONTRIBUTING.md` § Cross-repo setup](../../CONTR
 The iOS touch icon uses the light-background variant so the `Ai?` mark sits
 on an opaque tile rather than showing through to the user's wallpaper.
 
+## Nav brand mark
+
+Theme-variant PNGs displayed as the `Ai?` mark in the site nav
+(`src/components/Nav.astro`). Sourced from the circle-safe variant so the
+baked safe-margin gives the mark breathing room without CSS padding.
+Lanczos-downsampled from the HQ 8K master per `brand/visual-identity.md`
+rasterization rule — direct browser SVG rasterization at 32 px produces
+aliased edges.
+
+Loaded via CSS `background-image: image-set(... 1x, ... 2x, ... 3x)`; theme
+variant tracks the `.dark` class on `<html>` set pre-paint by the inline
+script in `BaseHead.astro`. Both variants are preloaded in `BaseHead.astro`
+so the first theme toggle does not flash.
+
+| File in `public/brand/`   | HQ origin (brand HQ)             | Last synced |
+| ------------------------- | -------------------------------- | ----------- |
+| `nav-mark-light.png`      | `logo/png/circle-light/32.png`   | 2026-04-18  |
+| `nav-mark-light@2x.png`   | `logo/png/circle-light/64.png`   | 2026-04-18  |
+| `nav-mark-light@3x.png`   | `logo/png/circle-light/96.png`   | 2026-04-18  |
+| `nav-mark-dark.png`       | `logo/png/circle-dark/32.png`    | 2026-04-18  |
+| `nav-mark-dark@2x.png`    | `logo/png/circle-dark/64.png`    | 2026-04-18  |
+| `nav-mark-dark@3x.png`    | `logo/png/circle-dark/96.png`    | 2026-04-18  |
+
 ## `og-default.png`
 
 Default Open Graph image used by `src/components/BaseHead.astro` when a
