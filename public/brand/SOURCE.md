@@ -28,9 +28,9 @@ page does not set its own `image` prop. Embedded as `og:image` and
 `twitter:image`; renders in link previews on LinkedIn, Slack, Discord,
 iMessage, WhatsApp, Twitter, Bluesky, and similar surfaces.
 
-| File in `public/brand/` | HQ origin (brand HQ)          | Last synced |
-| ----------------------- | ----------------------------- | ----------- |
-| `og-default.png`        | `brand/social/og-image/*.svg` | 2026-04-18  |
+| File in `public/brand/` | HQ origin (brand HQ)                 | Last synced |
+| ----------------------- | ------------------------------------ | ----------- |
+| `og-default.png`        | `brand/social/og-image/og-image.svg` | 2026-04-18  |
 
 - Dimensions: 1200×630 (standard OG aspect)
 - Composition: Signal Orange (`#E85D2A`) base, two-line tagline in Inter 800,
