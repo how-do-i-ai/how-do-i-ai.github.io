@@ -1,4 +1,6 @@
 ---
+import { buildOrganizationSchema } from '../lib/structured-data';
+
 interface Props {
   title: string;
   description: string;
@@ -20,6 +22,12 @@ const canonicalURL = new URL(
   Astro.site,
 );
 const imageURL = new URL(image, Astro.site);
+
+// Organization JSON-LD is injected site-wide. Per-page schemas (Article,
+// BreadcrumbList) are injected from the page/layout that has the context.
+const organizationSchema = Astro.site
+  ? buildOrganizationSchema(Astro.site)
+  : null;
 ---
 
 <head>
@@ -113,6 +121,24 @@ const imageURL = new URL(image, Astro.site);
     defer
     data-domain="how-do-i.ai"
     src="https://plausible.io/js/script.js"></script>
+
+  {
+    /*
+      Schema.org Organization JSON-LD for SEO + AEO. HDIAI is an Organization,
+      not a Person — no founder attribution. The @id is referenced by
+      per-page Article schemas (publisher, author) to form a connected graph.
+      sameAs[] MUST stay in sync with the channel list in Footer.astro.
+    */
+  }
+  {
+    organizationSchema && (
+      <script
+        type="application/ld+json"
+        is:inline
+        set:html={JSON.stringify(organizationSchema)}
+      />
+    )
+  }
 
   <title>{title}</title>
 </head>
