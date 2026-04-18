@@ -1,0 +1,19 @@
+# How Do I AI?
+
+> AI first. For all of it. — https://how-do-i.ai
+
+How Do I AI? is a publication, not a personal brand. Multi-format content — blog, video, podcast — about applying AI to real work: drafting, planning, household logistics, side gigs, creative projects, shipping code. Practitioner walkthroughs with real workflows, real results, and the parts that didn't work. No "Top 10 Tools" lists. No courses to sell. No "AI will change everything" hype. AI writes. A human decides what's true.
+
+## Core
+
+- [About](https://how-do-i.ai/about/): What How Do I AI? is, how it's made, and why it isn't attributed to a person — a question brand, not a personal brand.
+- [Blog](https://how-do-i.ai/blog/): All posts, filterable by pillar, series, or tag.
+- [RSS feed](https://how-do-i.ai/rss.xml): Subscribe to new posts.
+- [Sitemap](https://how-do-i.ai/sitemap-index.xml): Full URL index.
+
+## Pillars
+
+- [AI-First Thinking](https://how-do-i.ai/blog/?pillar=thinking): Mental models, the Default Question, editorial position — starting with "how would I do this if AI could do anything?" instead of "can AI help?".
+- [AI in Practice](https://how-do-i.ai/blog/?pillar=practice): Practitioner walkthroughs — real workflows applied to real work, including the parts that didn't work.
+- [Tools & Workflows](https://how-do-i.ai/blog/?pillar=tools): Tool assessments, integrations, and repeatable workflows. Honest takes — not neutral.
+- [Meta](https://how-do-i.ai/blog/?pillar=meta): About the publication itself — how it's made, editorial standards, the AI-first production process.
