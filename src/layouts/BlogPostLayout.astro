@@ -13,6 +13,10 @@
  */
 
 import TableOfContents from '../components/TableOfContents.astro';
+import {
+  buildArticleSchema,
+  buildBreadcrumbListSchema,
+} from '../lib/structured-data';
 
 interface Props {
   frontmatter: {
@@ -32,7 +36,57 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
 });
+
+// Per-post structured data. `Astro.site` is defined in astro.config.mjs and
+// required for absolute URLs; skip schema injection if it's absent.
+const articleSchema = Astro.site
+  ? buildArticleSchema({
+      title: frontmatter.title,
+      description: frontmatter.description,
+      datePublished: new Date(frontmatter.date),
+      url: new URL(Astro.url.pathname, Astro.site),
+      siteUrl: Astro.site,
+      imageUrl: new URL('/brand/og-default.png', Astro.site),
+    })
+  : null;
+
+const breadcrumbSchema = Astro.site
+  ? buildBreadcrumbListSchema([
+      { name: 'Home', url: Astro.site },
+      { name: 'Blog', url: new URL('/blog/', Astro.site) },
+      {
+        name: frontmatter.title,
+        url: new URL(Astro.url.pathname, Astro.site),
+      },
+    ])
+  : null;
 ---
+
+{
+  /*
+    Per-post JSON-LD: Article (headline, date, Organization author/publisher)
+    and BreadcrumbList (Home → Blog → Post). Script tags in <body> are valid
+    and picked up by Google/LLM crawlers the same as those in <head>.
+  */
+}
+{
+  articleSchema && (
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(articleSchema)}
+    />
+  )
+}
+{
+  breadcrumbSchema && (
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(breadcrumbSchema)}
+    />
+  )
+}
 
 <article class="post">
   <header class="post-header">
