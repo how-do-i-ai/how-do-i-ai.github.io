@@ -47,7 +47,7 @@ Blog posts live in `src/content/blog/{slug}.md`. Frontmatter is validated by the
 | `readingTime` | no       | Integer minutes; auto-estimated if omitted    |
 | `draft`       | no       | `true` to exclude from build; default `false` |
 
-Valid pillars: `ai-first-thinking`, `ai-in-practice`, `tools-and-workflows`, `behind-the-scenes`.
+Valid pillars: `thinking`, `practice`, `tools`, `meta`.
 
 Valid series: `ai-at-home`, `ai-at-work`, `ai-for-gigs`, `ai-mindset`.
 

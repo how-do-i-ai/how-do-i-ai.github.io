@@ -42,7 +42,7 @@ function post(overrides: {
       title: 't',
       description: 'd',
       date: new Date(2025, 0, 1),
-      pillar: 'ai-in-practice',
+      pillar: 'practice',
       tags: [],
       draft: false,
       ...overrides.data,
@@ -86,7 +86,7 @@ describe('getPostsByPillar / getPostsBySeries / getPostsByTag', () => {
       post({
         id: 'p1',
         data: {
-          pillar: 'ai-in-practice',
+          pillar: 'practice',
           series: 'ai-at-work',
           tags: ['llms'],
         },
@@ -94,20 +94,20 @@ describe('getPostsByPillar / getPostsBySeries / getPostsByTag', () => {
       post({
         id: 'p2',
         data: {
-          pillar: 'tools-and-workflows',
+          pillar: 'tools',
           series: 'ai-for-gigs',
           tags: ['ide'],
         },
       }),
       post({
         id: 'p3',
-        data: { pillar: 'ai-in-practice', tags: ['llms', 'rag'] },
+        data: { pillar: 'practice', tags: ['llms', 'rag'] },
       }),
     ]);
   });
 
   it('filters by pillar', async () => {
-    const result = await getPostsByPillar('ai-in-practice');
+    const result = await getPostsByPillar('practice');
     expect(result.map((p) => p.id).sort()).toEqual(['p1', 'p3']);
   });
 
@@ -127,20 +127,20 @@ describe('getRelatedPosts', () => {
     getCollectionMock.mockImplementation(async () => [
       post({
         id: 'current',
-        data: { pillar: 'ai-in-practice', series: 'ai-at-work', tags: ['a'] },
+        data: { pillar: 'practice', series: 'ai-at-work', tags: ['a'] },
       }),
       post({
         id: 'same-pillar-only',
-        data: { pillar: 'ai-in-practice', tags: [] },
+        data: { pillar: 'practice', tags: [] },
       }),
       post({
         id: 'same-series-only',
-        data: { pillar: 'tools-and-workflows', series: 'ai-at-work', tags: [] },
+        data: { pillar: 'tools', series: 'ai-at-work', tags: [] },
       }),
     ]);
     const current = post({
       id: 'current',
-      data: { pillar: 'ai-in-practice', series: 'ai-at-work', tags: ['a'] },
+      data: { pillar: 'practice', series: 'ai-at-work', tags: ['a'] },
     });
     const result = await getRelatedPosts(current, 3);
     expect(result.map((p) => p.id)).toEqual([
@@ -153,20 +153,20 @@ describe('getRelatedPosts', () => {
     getCollectionMock.mockImplementation(async () => [
       post({
         id: 'current',
-        data: { pillar: 'ai-in-practice', tags: ['a', 'b'] },
+        data: { pillar: 'practice', tags: ['a', 'b'] },
       }),
       post({
         id: 'tags-only',
-        data: { pillar: 'behind-the-scenes', tags: ['a', 'b'] },
+        data: { pillar: 'meta', tags: ['a', 'b'] },
       }),
       post({
         id: 'pillar-no-tags',
-        data: { pillar: 'ai-in-practice', tags: [] },
+        data: { pillar: 'practice', tags: [] },
       }),
     ]);
     const current = post({
       id: 'current',
-      data: { pillar: 'ai-in-practice', tags: ['a', 'b'] },
+      data: { pillar: 'practice', tags: ['a', 'b'] },
     });
     const result = await getRelatedPosts(current, 3);
     // pillar-no-tags: score 2 (pillar). tags-only: score 2 (two shared tags).
@@ -179,11 +179,11 @@ describe('getRelatedPosts', () => {
 
   it('excludes the post itself', async () => {
     getCollectionMock.mockImplementation(async () => [
-      post({ id: 'current', data: { pillar: 'ai-in-practice', tags: ['a'] } }),
+      post({ id: 'current', data: { pillar: 'practice', tags: ['a'] } }),
     ]);
     const current = post({
       id: 'current',
-      data: { pillar: 'ai-in-practice', tags: ['a'] },
+      data: { pillar: 'practice', tags: ['a'] },
     });
     const result = await getRelatedPosts(current, 3);
     expect(result).toEqual([]);
@@ -192,10 +192,10 @@ describe('getRelatedPosts', () => {
   it('returns at most `limit` results', async () => {
     getCollectionMock.mockImplementation(async () =>
       [1, 2, 3, 4, 5].map((i) =>
-        post({ id: `p${i}`, data: { pillar: 'ai-in-practice' } }),
+        post({ id: `p${i}`, data: { pillar: 'practice' } }),
       ),
     );
-    const current = post({ id: 'current', data: { pillar: 'ai-in-practice' } });
+    const current = post({ id: 'current', data: { pillar: 'practice' } });
     const result = await getRelatedPosts(current, 2);
     expect(result).toHaveLength(2);
   });
@@ -204,12 +204,12 @@ describe('getRelatedPosts', () => {
     getCollectionMock.mockImplementation(async () => [
       post({
         id: 'unrelated',
-        data: { pillar: 'behind-the-scenes', tags: ['other'] },
+        data: { pillar: 'meta', tags: ['other'] },
       }),
     ]);
     const current = post({
       id: 'current',
-      data: { pillar: 'ai-in-practice', tags: ['rag'] },
+      data: { pillar: 'practice', tags: ['rag'] },
     });
     const result = await getRelatedPosts(current, 3);
     expect(result).toEqual([]);
