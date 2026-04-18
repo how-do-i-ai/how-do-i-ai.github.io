@@ -57,6 +57,10 @@ Drafts (`draft: true`) are excluded from listings, RSS, sitemap, and page genera
 
 GitHub Pages via `.github/workflows/deploy.yml`. Triggered on push to `main`. The workflow builds the site and publishes `dist/` to the `gh-pages` environment.
 
+## Contributing
+
+Repo conventions — cross-repo setup (the private HDIAI HQ sibling repo), vendored brand asset provenance, branch and commit style — live in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
 ## License
 
 See [LICENSE](./LICENSE) for the project license. Self-hosted fonts carry their own licenses — see attribution files alongside the font binaries in `public/fonts/`.
