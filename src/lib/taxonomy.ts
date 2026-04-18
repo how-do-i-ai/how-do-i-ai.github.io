@@ -7,10 +7,10 @@
  */
 
 export const PILLARS = {
-  'ai-first-thinking': 'AI-First Thinking',
-  'ai-in-practice': 'AI in Practice',
-  'tools-and-workflows': 'Tools & Workflows',
-  'behind-the-scenes': 'Behind the Scenes',
+  thinking: 'AI-First Thinking',
+  practice: 'AI in Practice',
+  tools: 'Tools & Workflows',
+  meta: 'Meta',
 } as const;
 
 export const SERIES = {

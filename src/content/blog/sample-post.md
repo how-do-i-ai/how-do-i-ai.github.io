@@ -2,7 +2,7 @@
 title: 'Building Your First AI-Assisted Workflow'
 description: 'A practical guide to integrating AI tools into your daily work, from identifying repetitive tasks to building reliable automation pipelines.'
 date: 2025-01-15
-pillar: tools-and-workflows
+pillar: tools
 series: ai-at-work
 tags:
   - automation

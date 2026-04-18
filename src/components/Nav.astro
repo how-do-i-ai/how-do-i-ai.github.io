@@ -9,13 +9,13 @@ interface Props {
 
 const { activePillar } = Astro.props;
 
-const btsPosts = await getPostsByPillar('behind-the-scenes');
-const showBts = btsPosts.length > 0;
+const metaPosts = await getPostsByPillar('meta');
+const showMeta = metaPosts.length > 0;
 
-// Nav surfaces all pillars except Behind-the-Scenes, which only shows
-// once there is at least one published post in that pillar.
+// Nav surfaces all pillars except Meta, which only shows once there
+// is at least one published post in that pillar.
 const pillars = Object.entries(PILLARS)
-  .filter(([slug]) => slug !== 'behind-the-scenes' || showBts)
+  .filter(([slug]) => slug !== 'meta' || showMeta)
   .map(([slug, label]) => ({ slug, label }));
 ---
 
