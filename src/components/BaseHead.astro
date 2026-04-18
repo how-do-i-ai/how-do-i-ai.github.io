@@ -48,13 +48,15 @@ const imageURL = new URL(image, Astro.site);
     'unsafe-inline' on script-src covers the theme-flash script below.
     'unsafe-inline' on style-src covers Astro's scoped component styles,
     which are emitted as inline <style> blocks per component.
+    https://plausible.io on script-src and connect-src covers the
+    Plausible Analytics script and its event endpoint.
     A future hardening step is to generate build-time hashes for the
     inline script and replace script-src 'unsafe-inline' with a hash
     allowlist.
   -->
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://plausible.io; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
   />
 
   <!-- Open Graph -->
@@ -104,6 +106,13 @@ const imageURL = new URL(image, Astro.site);
       }
     })();
   </script>
+
+  <!-- Plausible Analytics: cookieless, privacy-friendly page-view tracking -->
+  <script
+    is:inline
+    defer
+    data-domain="how-do-i.ai"
+    src="https://plausible.io/js/script.js"></script>
 
   <title>{title}</title>
 </head>
