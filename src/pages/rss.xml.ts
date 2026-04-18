@@ -7,7 +7,8 @@ export async function GET(context: APIContext) {
 
   return rss({
     title: 'How Do I AI',
-    description: 'AI first. For all of it.',
+    description:
+      'AI first – for everything you do. Practitioner walkthroughs and tool assessments from How Do I AI.',
     site: context.site!.href,
     items: posts.map((post) => ({
       title: post.data.title,
