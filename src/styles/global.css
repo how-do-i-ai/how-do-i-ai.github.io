@@ -275,3 +275,14 @@ pre code {
   white-space: nowrap;
   border-width: 0;
 }
+
+/* --------------------------------------------------------------------------
+   Utility: Orange Accent Pattern — glyph-level emphasis
+   Wrap the structural anchor of a phrase (word or punctuation) to mark it
+   orange. Honors dark/light mode via --color-accent; no hardcoded hex.
+   Decorative emphasis only — full phrase remains DOM text for a11y.
+   -------------------------------------------------------------------------- */
+
+.accent {
+  color: var(--color-accent);
+}

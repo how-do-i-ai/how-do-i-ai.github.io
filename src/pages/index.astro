@@ -16,8 +16,16 @@ const hasPosts = posts.length > 0;
     <h1 class="hero-brand">
       How Do I AI<span class="hero-question-mark">?</span>
     </h1>
-    <p class="hero-tagline">AI first. For all of it.</p>
-    <p class="hero-descriptor">Real workflows. Honest takes. No hype.</p>
+    <p class="hero-tagline">
+      <span class="accent">AI</span> first –
+      <span class="accent">for</span> everything
+      <span class="accent">you</span> do.
+    </p>
+    <p class="hero-descriptor">
+      What works<span class="accent">?</span>
+      When to use<span class="accent">?</span>
+      How to do<span class="accent">?</span>
+    </p>
   </section>
 
   {
@@ -73,13 +81,15 @@ const hasPosts = posts.length > 0;
 
   .hero-tagline {
     font-size: var(--text-xl);
-    color: var(--color-muted);
+    font-weight: 800;
+    color: var(--color-text);
     margin-block: var(--space-4) var(--space-2);
   }
 
   .hero-descriptor {
     font-size: var(--text-base);
-    color: var(--color-muted);
+    font-weight: 600;
+    color: var(--color-text);
     margin-block: 0;
   }
 
