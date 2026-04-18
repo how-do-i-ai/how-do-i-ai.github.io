@@ -1,0 +1,8 @@
+# How Do I AI? — robots.txt
+# Policy: all user-agents may index the full site, including AI crawlers.
+# LLM citation is a core distribution channel; AI bots are welcome.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://how-do-i.ai/sitemap-index.xml
