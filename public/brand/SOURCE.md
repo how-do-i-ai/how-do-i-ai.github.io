@@ -35,14 +35,28 @@ variant tracks the `.dark` class on `<html>` set pre-paint by the inline
 script in `BaseHead.astro`. Both variants are preloaded in `BaseHead.astro`
 so the first theme toggle does not flash.
 
-| File in `public/brand/`   | HQ origin (brand HQ)             | Last synced |
-| ------------------------- | -------------------------------- | ----------- |
-| `nav-mark-light.png`      | `logo/png/circle-light/32.png`   | 2026-04-18  |
-| `nav-mark-light@2x.png`   | `logo/png/circle-light/64.png`   | 2026-04-18  |
-| `nav-mark-light@3x.png`   | `logo/png/circle-light/96.png`   | 2026-04-18  |
-| `nav-mark-dark.png`       | `logo/png/circle-dark/32.png`    | 2026-04-18  |
-| `nav-mark-dark@2x.png`    | `logo/png/circle-dark/64.png`    | 2026-04-18  |
-| `nav-mark-dark@3x.png`    | `logo/png/circle-dark/96.png`    | 2026-04-18  |
+| File in `public/brand/` | HQ origin (brand HQ)           | Last synced |
+| ----------------------- | ------------------------------ | ----------- |
+| `nav-mark-light.png`    | `logo/png/circle-light/32.png` | 2026-04-18  |
+| `nav-mark-light@2x.png` | `logo/png/circle-light/64.png` | 2026-04-18  |
+| `nav-mark-light@3x.png` | `logo/png/circle-light/96.png` | 2026-04-18  |
+| `nav-mark-dark.png`     | `logo/png/circle-dark/32.png`  | 2026-04-18  |
+| `nav-mark-dark@2x.png`  | `logo/png/circle-dark/64.png`  | 2026-04-18  |
+| `nav-mark-dark@3x.png`  | `logo/png/circle-dark/96.png`  | 2026-04-18  |
+
+## Android web manifest icons
+
+Android home-screen adaptive icons referenced from `public/manifest.webmanifest`.
+Distinct from PWA — `display: browser`, no service worker, no offline. Lanczos
+downscales from the HQ 8K master per `brand/visual-identity.md` rasterization
+rule. Not `purpose: "maskable"` at baseline — current PNGs carry the square
+paint inset of the light-bg variant; adaptive-icon safe-zone masking can be
+added as a follow-up.
+
+| File in `public/brand/`  | HQ origin (brand HQ)               | Last synced |
+| ------------------------ | ---------------------------------- | ----------- |
+| `android-chrome-192.png` | `logo/png/square-light-bg/192.png` | 2026-04-19  |
+| `android-chrome-512.png` | `logo/png/square-light-bg/512.png` | 2026-04-19  |
 
 ## `og-default.png`
 

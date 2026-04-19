@@ -1,0 +1,20 @@
+{
+  "name": "How Do I AI?",
+  "short_name": "HDIAI",
+  "start_url": "/",
+  "display": "browser",
+  "theme_color": "#E85D2A",
+  "background_color": "#FAFAF9",
+  "icons": [
+    {
+      "src": "/brand/android-chrome-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/brand/android-chrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
