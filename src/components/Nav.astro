@@ -251,8 +251,15 @@ const pillars = Object.entries(PILLARS)
     color: var(--color-accent);
   }
 
-  /* 480px+: pillar list collapses to a single horizontal row beside
-     .nav-actions; .nav-inner stays column so the wordmark sits above. */
+  /* 480-767px: .nav-links flexes to row; pillar-links keep `flex-wrap: wrap`
+     (inherited from base) and collapse to one row ONLY when geometry allows.
+     Historic "at 480px+ collapse to single row" rule (PDR-006 original
+     constraint 4) was superseded 2026-04-19 after PR #99 fresh-context review
+     surfaced B1: 3 pillars + gaps need ~413px but space-between allocates
+     ~316px at 480vp, causing the active pillar chip to overlap .nav-actions.
+     Current amendment (PDR-006 § Cascade log 2026-04-19, part 3): wrap is
+     invariant across 0-767px; single-row is an emergent outcome, not enforced.
+     Do NOT reintroduce `flex-wrap: nowrap` here — it was the B1 root cause. */
   @media (min-width: 480px) /* --bp-sm */ {
     .nav-links {
       flex-direction: row;
@@ -261,7 +268,6 @@ const pillars = Object.entries(PILLARS)
     }
 
     .pillar-links {
-      flex-wrap: nowrap;
       justify-content: flex-start;
       column-gap: var(--space-2);
       flex: 1;
