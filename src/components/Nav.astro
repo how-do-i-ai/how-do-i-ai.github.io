@@ -79,18 +79,26 @@ const pillars = Object.entries(PILLARS)
     border-bottom: 1px solid var(--color-surface);
   }
 
+  /*
+    Pattern A (PDR-006): mobile-first stacked layout. At <480px, wordmark
+    sits centered above a wrapping pillar row, with .nav-actions on its
+    own row. Focus-order guardrail (ux-architecture.md:140): no `order`,
+    no `flex-direction: *-reverse`, no explicit grid placement on this
+    subtree — DOM order is the reading order.
+  */
   .nav-inner {
-    max-width: 64rem;
+    max-width: var(--content-max);
     margin: 0 auto;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--space-4);
   }
 
   .wordmark {
     display: inline-flex;
     align-items: center;
+    align-self: center;
     gap: var(--space-2);
     font-family: var(--font-sans);
     font-size: var(--text-xl);
@@ -162,35 +170,33 @@ const pillars = Object.entries(PILLARS)
   }
 
   .nav-links {
+    /* Base (<480px): stack pillar row above actions row. */
     display: flex;
-    flex: 1;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
     gap: var(--space-4);
   }
 
   .pillar-links {
+    /* Visible wrapping flex row — no overflow scroll. Row gap ≥16px
+       preserves typographic rhythm when wrapping (PDR-006 constraint 2). */
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-    gap: var(--space-2);
+    row-gap: var(--space-4);
+    column-gap: var(--space-2);
     list-style: none;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .pillar-links::-webkit-scrollbar {
-    display: none;
   }
 
   .pillar-link {
     display: inline-flex;
     align-items: center;
     padding: var(--space-2) var(--space-3);
-    min-height: 44px;
+    min-height: var(--touch-target);
     border-radius: var(--radius-lg);
     font-size: var(--text-sm);
-    font-weight: 500;
+    font-weight: 500; /* Medium 500 base; wordmark stays strongest at 700 */
     color: var(--color-muted);
     text-decoration: none;
     white-space: nowrap;
@@ -204,14 +210,28 @@ const pillars = Object.entries(PILLARS)
     background-color: var(--color-surface);
   }
 
+  /*
+    Active state per ux-architecture.md:126-130 (amended 2026-04-19):
+    the weight step Medium 500 → Semibold 600 is the PRIMARY state
+    indicator. --color-surface background is decorative — measured 1.06:1
+    light / 1.19:1 dark contrast against page bg is below SC 1.4.11's 3:1,
+    but justified because the weight step carries state independently of
+    color (SC 1.4.11 "required to identify" clause). color-text on
+    color-surface itself is 15.04:1 light / 10.32:1 dark (passes SC 1.4.3
+    AAA). Do NOT restore --color-accent on active — that was the
+    pre-amendment rule (Signal Orange is reserved for tagline signature
+    per PDR-004 and would dilute the brand-signature device).
+  */
   .pillar-link.active {
-    color: var(--color-accent);
+    color: var(--color-text);
     background-color: var(--color-surface);
+    font-weight: 600;
   }
 
   .nav-actions {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-3);
     flex-shrink: 0;
   }
@@ -220,8 +240,8 @@ const pillars = Object.entries(PILLARS)
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     color: var(--color-muted);
     text-decoration: none;
     transition: color var(--transition-fast);
@@ -231,31 +251,39 @@ const pillars = Object.entries(PILLARS)
     color: var(--color-accent);
   }
 
-  /* Mobile: stack wordmark above scrollable pillar chips */
-  @media (max-width: 767px) {
-    .nav-inner {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .wordmark {
-      justify-content: center;
-    }
-
+  /* 480px+: pillar list collapses to a single horizontal row beside
+     .nav-actions; .nav-inner stays column so the wordmark sits above. */
+  @media (min-width: 480px) /* --bp-sm */ {
     .nav-links {
+      flex-direction: row;
       justify-content: space-between;
+      align-items: center;
     }
 
     .pillar-links {
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      column-gap: var(--space-2);
       flex: 1;
       min-width: 0;
     }
   }
 
-  /* Desktop: wordmark left, links center-right, actions far right */
-  @media (min-width: 768px) {
+  /* 768px+: desktop — wordmark left, pillars center-right, actions far right */
+  @media (min-width: 768px) /* --bp-md */ {
     .nav-inner {
+      flex-direction: row;
       flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .wordmark {
+      align-self: auto;
+    }
+
+    .nav-links {
+      flex: 1;
+      justify-content: flex-end;
     }
   }
 </style>
