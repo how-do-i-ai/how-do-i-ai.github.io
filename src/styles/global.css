@@ -1,7 +1,10 @@
 /* ==========================================================================
    How Do I AI — Design System
-   CSS custom properties, font declarations, and base typography.
+   Design tokens live in tokens.css (imported below). This file handles
+   font declarations, CSS reset, base typography, and global utilities.
    ========================================================================== */
+
+@import './tokens.css';
 
 /* --------------------------------------------------------------------------
    @font-face — Self-hosted fonts
@@ -24,81 +27,6 @@
 }
 
 /* --------------------------------------------------------------------------
-   Design Tokens — Light mode (default)
-   -------------------------------------------------------------------------- */
-
-:root {
-  /* Colors */
-  --color-bg: #fafaf9;
-  --color-text: #1e1e1e;
-  --color-accent: #e85d2a;
-  --color-surface: #f5f3ef;
-  --color-muted: #6b7280;
-  --color-teal: #2aafaa;
-  --color-amber: #f5a623;
-
-  /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
-
-  /* Font sizes — modular scale (base 1rem, ratio ~1.25) */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-
-  /* Line heights */
-  --leading-tight: 1.2;
-  --leading-normal: 1.6;
-  --leading-relaxed: 1.75;
-
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-
-  /* Shadows — card hover elevation */
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-card-featured: 0 6px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* --------------------------------------------------------------------------
-   Design Tokens — Dark mode
-   -------------------------------------------------------------------------- */
-
-:root.dark {
-  --color-bg: #2a2a2a;
-  --color-text: #ededed;
-  --color-accent: #f06937;
-  --color-surface: #363636;
-  --color-muted: #9ca3af;
-  --color-teal: #3cc4be;
-  --color-amber: #d4911e;
-
-  /* Shadows — darker base for visibility on dark surfaces */
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-card-featured: 0 6px 20px rgba(0, 0, 0, 0.5);
-}
-
-/* --------------------------------------------------------------------------
    CSS Reset / Normalize
    -------------------------------------------------------------------------- */
 
@@ -117,6 +45,11 @@ html {
   -webkit-text-size-adjust: 100%;
   -moz-tab-size: 4;
   tab-size: 4;
+  /*
+    Anchor-link target offset. Forward-compatible with future sticky nav
+    (PDR-006 § Sticky nav on scroll — not adopted at v1, token present).
+  */
+  scroll-padding-top: var(--space-16);
 }
 
 body {
