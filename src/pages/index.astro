@@ -87,6 +87,16 @@ const hasPosts = posts.length > 0;
     font-weight: 800;
     color: var(--color-text);
     margin-block: var(--space-4) var(--space-2);
+    /*
+      text-wrap: balance prevents orange accent words (AI / for / you)
+      from orphaning on the first or last line at narrow viewports per
+      PDR-004 § Wrap behavior (2026-04-19 amendment). Accent-word
+      position-independence: glyph-level emphasis follows the word
+      wherever it wraps; orphaning breaks the visual rhythm of the
+      Orange Accent Pattern. Baseline: Chrome 114+, Safari 17.5+,
+      Firefox 121+; graceful fallback on older browsers is natural wrap.
+    */
+    text-wrap: balance;
   }
 
   .hero-descriptor {
