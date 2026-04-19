@@ -51,6 +51,25 @@ const organizationSchema = Astro.site
   <link rel="apple-touch-icon" href="/brand/apple-touch-icon.png" />
 
   <!--
+    Android web manifest (baseline, not PWA). Declares brand icon, name,
+    and theme color for Android Chrome save-to-home-screen. display:
+    browser keeps the site as a regular browsing surface — no service
+    worker, no offline, no standalone mode. See PDR-006 § Android web
+    manifest.
+  -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta
+    name="theme-color"
+    content="#E85D2A"
+    media="(prefers-color-scheme: light)"
+  />
+  <meta
+    name="theme-color"
+    content="#F06937"
+    media="(prefers-color-scheme: dark)"
+  />
+
+  <!--
     Content Security Policy.
 
     'unsafe-inline' on script-src covers the theme-flash script below.
