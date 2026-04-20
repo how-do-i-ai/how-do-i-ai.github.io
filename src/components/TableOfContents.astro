@@ -70,7 +70,7 @@ const shouldRender = h2Headings.length >= 4;
     cursor: pointer;
     list-style: none;
     user-select: none;
-    min-height: 44px;
+    min-height: var(--touch-target);
     display: flex;
     align-items: center;
   }
@@ -104,7 +104,7 @@ const shouldRender = h2Headings.length >= 4;
   .toc-item a {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    min-height: var(--touch-target);
     font-size: var(--text-sm);
     color: var(--color-text);
     text-decoration: none;
