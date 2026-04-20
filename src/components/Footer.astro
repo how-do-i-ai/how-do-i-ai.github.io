@@ -49,6 +49,8 @@ const channels: Channel[] = [
     path: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z',
   },
 ];
+
+const currentYear = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
@@ -107,6 +109,7 @@ const channels: Channel[] = [
         </li>
       </ul>
     </nav>
+    <p class="copyright">© {currentYear} How Do I AI?</p>
   </div>
 </footer>
 
@@ -127,7 +130,8 @@ const channels: Channel[] = [
     gap: var(--space-4);
   }
 
-  .tagline {
+  .tagline,
+  .copyright {
     font-size: var(--text-sm);
     color: var(--color-muted);
     margin: 0;
@@ -186,11 +190,16 @@ const channels: Channel[] = [
     flex-shrink: 0;
   }
 
-  /* Mobile: stack tagline above channel list, wrap links to multiple rows. */
+  /* Mobile: stacked full-width sections at <640px per PDR-006 § Per-page / ux-architecture § Mobile § Footer. */
   @media (max-width: 639px) {
     .footer-inner {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
+    }
+
+    .footer-link,
+    .channel-link {
+      min-width: var(--touch-target);
     }
   }
 </style>
