@@ -46,30 +46,57 @@ jobs:
           script: |
             const fs = require('fs');
 
-            const manifestPath = '.lighthouseci/manifest.json';
-            if (!fs.existsSync(manifestPath)) {
-              core.warning('No Lighthouse manifest found — skipping PR comment.');
+            const lhciDir = '.lighthouseci';
+            if (!fs.existsSync(lhciDir)) {
+              core.warning('No .lighthouseci/ directory found — skipping PR comment.');
               return;
             }
 
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-            const representative = manifest.filter(run => run.isRepresentativeRun);
-
-            if (representative.length === 0) {
-              core.warning('Manifest contains no representative runs — skipping PR comment.');
+            const lhrFiles = fs.readdirSync(lhciDir).filter(f => /^lhr-\d+\.json$/.test(f));
+            if (lhrFiles.length === 0) {
+              core.warning('No Lighthouse reports found — skipping PR comment.');
               return;
             }
 
+            const linksPath = `${lhciDir}/links.json`;
+            const links = fs.existsSync(linksPath) ? JSON.parse(fs.readFileSync(linksPath, 'utf8')) : {};
+
+            const runsByUrl = {};
+            for (const f of lhrFiles) {
+              const r = JSON.parse(fs.readFileSync(`${lhciDir}/${f}`, 'utf8'));
+              const url = r.finalDisplayedUrl || r.finalUrl;
+              (runsByUrl[url] ||= []).push({
+                performance: r.categories.performance?.score,
+                accessibility: r.categories.accessibility?.score,
+                'best-practices': r.categories['best-practices']?.score,
+                seo: r.categories.seo?.score,
+              });
+            }
+
+            const median = (arr) => {
+              const valid = arr.filter(x => x !== null && x !== undefined).sort((a, b) => a - b);
+              return valid.length === 0 ? null : valid[Math.floor(valid.length / 2)];
+            };
+            const worst = (arr) => {
+              const valid = arr.filter(x => x !== null && x !== undefined);
+              return valid.length === 0 ? null : Math.min(...valid);
+            };
             const pct = (s) => (s === null || s === undefined) ? 'n/a' : Math.round(s * 100);
             const bar = (s, threshold) => {
               if (s === null || s === undefined) return '';
               return Math.round(s * 100) >= threshold ? ' ✅' : ' ❌';
             };
 
-            const rows = representative.map(run => {
-              const s = run.summary;
-              const url = new URL(run.url).pathname || '/';
-              return `| \`${url}\` | ${pct(s.performance)}${bar(s.performance, 95)} | ${pct(s.accessibility)}${bar(s.accessibility, 100)} | ${pct(s['best-practices'])}${bar(s['best-practices'], 95)} | ${pct(s.seo)}${bar(s.seo, 95)} |`;
+            const urls = Object.keys(runsByUrl).sort();
+            const rows = urls.map(u => {
+              const runs = runsByUrl[u];
+              const perf = median(runs.map(r => r.performance));
+              const a11y = worst(runs.map(r => r.accessibility));
+              const bp = median(runs.map(r => r['best-practices']));
+              const seo = median(runs.map(r => r.seo));
+              const path = new URL(u).pathname || '/';
+              const reportLink = links[u] ? ` ([report](${links[u]}))` : '';
+              return `| \`${path}\`${reportLink} | ${pct(perf)}${bar(perf, 95)} | ${pct(a11y)}${bar(a11y, 100)} | ${pct(bp)}${bar(bp, 95)} | ${pct(seo)}${bar(seo, 95)} |`;
             });
 
             const marker = '<!-- lighthouse-ci-report -->';
@@ -77,7 +104,7 @@ jobs:
               marker,
               '### Lighthouse CI results',
               '',
-              'Mobile viewport 375×667, 4G throttling (median of 3 runs).',
+              'Mobile viewport 375×667, Slow 4G simulated throttling. Perf / BP / SEO aggregated as **median of 3 runs**; Accessibility as **worst of 3 runs** (pessimistic — spec requires 100 on every run).',
               '',
               '| Page | Performance (≥95) | Accessibility (=100) | Best Practices (≥95) | SEO (≥95) |',
               '|------|-------------------|----------------------|----------------------|-----------|',
