@@ -36,3 +36,19 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: A11y — axe-core WCAG 2.2 AA
+        run: npm run test:a11y
+
+      - name: Upload a11y artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-axe-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 14

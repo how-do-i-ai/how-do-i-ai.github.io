@@ -9,6 +9,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:a11y": "playwright test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
+    "@axe-core/playwright": "^4.11.2",
+    "@playwright/test": "^1.59.1",
     "eslint": "^10.2.0",
     "eslint-plugin-astro": "^1.7.0",
     "prettier": "^3.8.3",
