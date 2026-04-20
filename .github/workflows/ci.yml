@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -37,9 +38,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Visual regression (QA-09). Playwright baselines live at
-      # tests/visual/__baselines__/ and are generated on Linux (CI OS) —
-      # see tests/visual/README.md for the update procedure.
+      # Playwright-driven gates: QA-09 visual regression +
+      # QA-08 axe-core WCAG 2.2 AA + QA-07 touch-target audit.
+      # A single `playwright test` invocation covers all three
+      # suites because projects in playwright.config.ts use
+      # testMatch to route specs to the right project(s).
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -59,7 +62,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: Visual regression tests
+      - name: QA-07 / QA-08 / QA-09 — Playwright suites
         run: npx playwright test
 
       - name: Upload Playwright HTML report
@@ -70,10 +73,23 @@ jobs:
           path: playwright-report/
           retention-days: 14
 
-      - name: Upload visual diff artifacts
+      - name: Upload Playwright trace/diff artifacts
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-diffs
+          name: playwright-test-results
           path: test-results/
+          retention-days: 14
+
+      # QA-06 Lighthouse mobile gates. Builds once at step above; LHCI
+      # runs its own static server from ./dist, so no preview needed.
+      - name: QA-06 — Lighthouse mobile gates
+        run: npx lhci autorun
+
+      - name: Upload Lighthouse artifacts
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci
+          path: .lighthouseci/
           retention-days: 14
