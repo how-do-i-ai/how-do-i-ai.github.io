@@ -121,6 +121,19 @@ const breadcrumbSchema = Astro.site
   <div class="prose">
     <slot />
   </div>
+
+  {/*
+    Issue #115: reader who scrolls to the end of a post has no explicit
+    path back to the unfiltered index. Nav chrome either applies a pillar
+    filter (chip tap) or jumps home (wordmark). This affordance sits
+    inside <article> so it lands before PrevNextNav in DOM order, matching
+    the AC "below the article body (before or near prev/next nav)".
+  */}
+  <nav class="back-to-posts" aria-label="Back to blog index">
+    <a href="/blog/" class="back-to-posts-link">
+      <span aria-hidden="true">&larr;</span> All posts
+    </a>
+  </nav>
 </article>
 
 <style>
@@ -171,6 +184,38 @@ const breadcrumbSchema = Astro.site
 
   .post-meta-sep {
     color: var(--color-muted);
+  }
+
+  /* ------------------------------------------------------------------
+     Back-to-posts affordance (issue #115)
+
+     --color-link (not --color-accent) per tokens.css rationale: functional
+     text links need 4.5:1 on --color-bg for WCAG 1.4.3. --touch-target
+     (44px) + padding-inline satisfies PDR-006 / REQ-MOB-03 tap area at
+     320/375/414/768 viewports (QA-07 gate).
+     ------------------------------------------------------------------ */
+
+  .back-to-posts {
+    margin-top: var(--space-12);
+  }
+
+  .back-to-posts-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    padding-inline: var(--space-2);
+    color: var(--color-link);
+    font-size: var(--text-base);
+    text-decoration: none;
+    transition:
+      color var(--transition-fast),
+      text-decoration-color var(--transition-fast);
+  }
+
+  .back-to-posts-link:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
   }
 
   /* ------------------------------------------------------------------
