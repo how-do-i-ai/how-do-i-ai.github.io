@@ -151,9 +151,18 @@ const currentYear = new Date().getUTCFullYear();
     gap: var(--space-4);
   }
 
+  /*
+    min-width: var(--touch-target) is unconditional (not mobile-only)
+    per WCAG 2.5.5 / REQ-MOB-03 — the audit measured 39.48×44 at 768
+    viewport, which is the breakpoint where the previous mobile-only
+    min-width block stopped applying. The touch-target baseline is
+    required at every viewport, not just <640px.
+  */
   .footer-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: var(--touch-target);
     min-height: var(--touch-target);
     padding: var(--space-2) 0;
     font-size: var(--text-sm);
@@ -181,6 +190,7 @@ const currentYear = new Date().getUTCFullYear();
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
+    min-width: var(--touch-target);
     min-height: var(--touch-target);
     padding: var(--space-2) 0;
     font-size: var(--text-sm);
@@ -203,11 +213,6 @@ const currentYear = new Date().getUTCFullYear();
     .footer-inner {
       flex-direction: column;
       align-items: stretch;
-    }
-
-    .footer-link,
-    .channel-link {
-      min-width: var(--touch-target);
     }
   }
 </style>
