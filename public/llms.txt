@@ -16,4 +16,4 @@ How Do I AI? is a publication, not a personal brand. Multi-format content — bl
 - [AI-First Thinking](https://how-do-i.ai/blog/?pillar=thinking): Mental models, the Default Question, editorial position — starting with "how would I do this if AI could do anything?" instead of "can AI help?".
 - [AI in Practice](https://how-do-i.ai/blog/?pillar=practice): Practitioner walkthroughs — real workflows applied to real work, including the parts that didn't work.
 - [Tools & Workflows](https://how-do-i.ai/blog/?pillar=tools): Tool assessments, integrations, and repeatable workflows. Honest takes — not neutral.
-- [Meta](https://how-do-i.ai/blog/?pillar=meta): About the publication itself — how it's made, editorial standards, the AI-first production process.
+- [Behind the Scenes](https://how-do-i.ai/blog/?pillar=meta): About the publication itself — how it's made, editorial standards, the AI-first production process.
