@@ -87,10 +87,20 @@ const organizationSchema = Astro.site
     A future hardening step is to generate build-time hashes for the
     inline script and replace script-src 'unsafe-inline' with a hash
     allowlist.
+
+    `frame-ancestors` is intentionally omitted. Browsers ignore it when
+    delivered via <meta> (W3C CSP Level 3 § 3.3 — valid via HTTP header
+    only), and including it produces a console warning on every page
+    load. GitHub Pages cannot emit custom response headers, so
+    clickjacking protection is not enforceable on this host. If the site
+    migrates off GitHub Pages (see ADR-001 § Cloudflare Pages migration
+    option), add `X-Frame-Options: DENY` (or equivalent `frame-ancestors`
+    directive) via the destination's header mechanism — e.g. a
+    `public/_headers` file for Cloudflare Pages.
   -->
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self';"
   />
 
   <!-- Open Graph -->
