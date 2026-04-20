@@ -14,7 +14,7 @@
 <style>
   .pull-quote {
     font-family: var(--font-sans);
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
     font-weight: 600;
     line-height: var(--leading-normal);
     color: var(--color-text);
@@ -23,5 +23,13 @@
     padding: var(--space-6);
     margin-block: var(--space-8);
     border-radius: var(--radius-md);
+  }
+
+  /* Step up to desktop emphasis above the base band; weight + border + surface
+     preserve hierarchy on mobile at the body-size step. */
+  @media (min-width: 480px) /* --bp-sm */ {
+    .pull-quote {
+      font-size: var(--text-xl);
+    }
   }
 </style>
