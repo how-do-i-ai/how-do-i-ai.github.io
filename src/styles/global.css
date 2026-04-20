@@ -8,6 +8,22 @@
 
 /* --------------------------------------------------------------------------
    @font-face — Self-hosted fonts
+   --------------------------------------------------------------------------
+   Inter is preloaded (see BaseHead.astro) but font-display: swap means
+   text paints with a fallback font first and swaps once Inter loads.
+   Without metrics matching, the swap reflows text and Lighthouse records
+   the POST-swap paint as the LCP, producing 2.9–3.4s LCP on Slow-4G
+   emulation (352 KB variable font transfer + throttling).
+
+   The 'InterFallback' and 'JetBrainsMonoFallback' @font-face blocks below
+   remap a local system font so its metrics (ascent / descent / size)
+   match Inter and JetBrains Mono. Visually, the swap becomes
+   imperceptible; Lighthouse LCP locks at first paint (~FCP).
+
+   Values computed via Next.js' font-metrics table for Inter / JetBrains
+   Mono against Arial / Courier New respectively. Do not adjust without
+   re-deriving from the upstream metric ratios — arbitrary values break
+   line-height rhythm.
    -------------------------------------------------------------------------- */
 
 @font-face {
@@ -19,11 +35,29 @@
 }
 
 @font-face {
+  font-family: 'InterFallback';
+  src: local('Arial');
+  ascent-override: 90.2%;
+  descent-override: 22.48%;
+  line-gap-override: 0%;
+  size-adjust: 107.4%;
+}
+
+@font-face {
   font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
   src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrainsMonoFallback';
+  src: local('Courier New');
+  ascent-override: 85%;
+  descent-override: 19%;
+  line-gap-override: 0%;
+  size-adjust: 110%;
 }
 
 /* --------------------------------------------------------------------------

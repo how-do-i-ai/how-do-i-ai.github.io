@@ -10,9 +10,19 @@ interface Props {
   url?: URL | string;
   type?: string;
   activePillar?: string;
+  /** Passed through to BaseHead; true only on pages rendering code. */
+  preloadMono?: boolean;
 }
 
-const { title, description, image, url, type, activePillar } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  url,
+  type,
+  activePillar,
+  preloadMono,
+} = Astro.props;
 ---
 
 <!doctype html>
@@ -23,6 +33,7 @@ const { title, description, image, url, type, activePillar } = Astro.props;
     image={image}
     url={url}
     type={type}
+    preloadMono={preloadMono}
   />
   <body>
     <a href="#main-content" class="skip-link">Skip to content</a>

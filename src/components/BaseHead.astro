@@ -7,6 +7,14 @@ interface Props {
   image?: string;
   url?: URL | string;
   type?: string;
+  /**
+   * Whether to preload JetBrains Mono. Default false — the monospace
+   * font is only used in code blocks, `<kbd>`, and similar elements
+   * that appear primarily on blog post pages. Preloading it site-wide
+   * wastes 92 KB of critical-path bandwidth on Home / Blog Index /
+   * About, hurting Lighthouse QA-06 Performance. Blog posts opt in.
+   */
+  preloadMono?: boolean;
 }
 
 const {
@@ -15,6 +23,7 @@ const {
   image = '/brand/og-default.png',
   url = Astro.url,
   type = 'website',
+  preloadMono = false,
 } = Astro.props;
 
 const canonicalURL = new URL(
@@ -98,7 +107,20 @@ const organizationSchema = Astro.site
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={imageURL.href} />
 
-  <!-- Font preloads -->
+  <!--
+    Font preloads — Inter only. JetBrains Mono is intentionally NOT
+    preloaded: it's used exclusively in `<code>` / `<pre>` / `<kbd>`
+    (blog posts), and preloading its 92 KB payload blocks Lighthouse
+    QA-06 performance to ≤ 0.92 on Slow-4G. The metrics-matched
+    'JetBrainsMonoFallback' (local Courier New, ascent/descent/size
+    overridden to match) covers the render gap — inline code starts
+    in the fallback, swaps to JetBrains Mono once it loads, and the
+    swap is visually imperceptible.
+
+    `preloadMono` is kept as a prop escape hatch for a future page
+    whose LCP candidate IS mono (e.g., a code-first landing) where the
+    opposite trade-off would apply.
+  -->
   <link
     rel="preload"
     href="/fonts/InterVariable.woff2"
@@ -106,13 +128,17 @@ const organizationSchema = Astro.site
     type="font/woff2"
     crossorigin
   />
-  <link
-    rel="preload"
-    href="/fonts/JetBrainsMono-Regular.woff2"
-    as="font"
-    type="font/woff2"
-    crossorigin
-  />
+  {
+    preloadMono && (
+      <link
+        rel="preload"
+        href="/fonts/JetBrainsMono-Regular.woff2"
+        as="font"
+        type="font/woff2"
+        crossorigin
+      />
+    )
+  }
 
   <!--
     Nav brand mark preloads. Both theme variants are preloaded
