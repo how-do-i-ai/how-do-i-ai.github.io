@@ -6,6 +6,11 @@ dist/
 # Astro generated types
 .astro/
 
+# Playwright artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
 # Temporary scratch files
 .tmp/*
 # Scoped exception: the PDR-006 branch-build work requires visual-compare
