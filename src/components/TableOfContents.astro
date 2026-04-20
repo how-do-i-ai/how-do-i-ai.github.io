@@ -6,8 +6,8 @@
  * Mobile: collapsible details/summary, collapsed by default.
  * Desktop: always expanded.
  *
- * Renders with the `open` attribute so content is visible without JS.
- * A small inline script closes the disclosure on narrow viewports.
+ * Renders without the `open` attribute so mobile (no-JS and JS) starts
+ * collapsed. A tiny inline script opens the disclosure on ≥768px.
  *
  * Props:
  *   headings — array of { depth, slug, text } from Astro's getHeadings()
@@ -26,7 +26,7 @@ const shouldRender = h2Headings.length >= 4;
 {
   shouldRender && (
     <nav class="toc" aria-label="Table of contents">
-      <details class="toc-details" open>
+      <details class="toc-details">
         <summary class="toc-summary">Table of contents</summary>
         <ol class="toc-list">
           {h2Headings.map((h) => (
@@ -40,13 +40,16 @@ const shouldRender = h2Headings.length >= 4;
   )
 }
 
-<script>
-  // Collapse TOC on mobile; leave expanded on desktop.
+<script is:inline>
+  // Open TOC by default on desktop; mobile stays collapsed.
+  // Inline + synchronous so it runs before paint and avoids a desktop flash.
   // No-ops on pages without a .toc-details element.
-  const details = document.querySelector('.toc-details');
-  if (details && window.matchMedia('(max-width: 767px)').matches) {
-    details.removeAttribute('open');
-  }
+  (function () {
+    const d = document.querySelector('.toc-details');
+    if (d && window.matchMedia('(min-width: 768px)').matches) {
+      d.setAttribute('open', '');
+    }
+  })();
 </script>
 
 <style>
@@ -112,13 +115,11 @@ const shouldRender = h2Headings.length >= 4;
     color: var(--color-accent);
   }
 
-  /* Desktop: hide disclosure toggle, keep always expanded */
-  @media (min-width: 768px) {
-    .toc-summary {
-      pointer-events: none;
-      cursor: default;
-    }
-
+  /* Desktop: hide the disclosure chevron. The summary stays interactive so
+     (1) a JS-off visitor can still open the TOC manually, and (2) a visitor
+     who prefers a collapsed TOC can toggle it closed. JS opens the details
+     by default on first paint; user interaction takes over from there. */
+  @media (min-width: 768px) /* --bp-md */ {
     .toc-summary::before {
       display: none;
     }

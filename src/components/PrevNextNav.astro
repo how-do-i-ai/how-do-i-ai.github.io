@@ -52,16 +52,16 @@ const showNav = prevPost || nextPost;
 
 <style>
   .prev-next-nav {
-    max-width: 680px;
+    max-width: var(--reading-max);
     margin-inline: auto;
-    padding-inline: var(--space-6);
+    padding-inline: var(--space-section-x);
     padding-block: var(--space-8);
     border-top: 1px solid var(--color-surface);
   }
 
   .prev-next-inner {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     gap: var(--space-6);
   }
 
@@ -70,7 +70,7 @@ const showNav = prevPost || nextPost;
     flex-direction: column;
     gap: var(--space-1);
     text-decoration: none;
-    max-width: 50%;
+    max-width: 100%;
     min-height: 44px;
     padding: var(--space-2) 0;
     transition: color var(--transition-fast);
@@ -85,8 +85,7 @@ const showNav = prevPost || nextPost;
   }
 
   .nav-next {
-    text-align: right;
-    margin-left: auto;
+    text-align: left;
   }
 
   .nav-label {
@@ -100,5 +99,22 @@ const showNav = prevPost || nextPost;
     color: var(--color-text);
     line-height: var(--leading-tight);
     transition: color var(--transition-fast);
+  }
+
+  /* Side-by-side layout above base band — prev-left / next-right */
+  @media (min-width: 480px) /* --bp-sm */ {
+    .prev-next-inner {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+
+    .nav-link {
+      max-width: 50%;
+    }
+
+    .nav-next {
+      text-align: right;
+      margin-left: auto;
+    }
   }
 </style>
