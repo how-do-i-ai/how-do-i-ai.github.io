@@ -18,6 +18,13 @@ const posts = await getPublishedPosts();
     </div>
 
     <BlogFilter>
+      {/*
+        Visually-hidden h2 preserves the heading cascade: the h3 titles
+        rendered by PostCard belong to this section (not the h1 page
+        title). Without an intermediate h2, axe-core flags the h1 → h3
+        jump (heading-order), failing QA-08 on blog-index.
+      */}
+      <h2 class="sr-only">Posts</h2>
       {
         posts.map((post) => (
           <div
