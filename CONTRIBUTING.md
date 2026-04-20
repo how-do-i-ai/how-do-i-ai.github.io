@@ -63,3 +63,34 @@ No automation, no symlink, no build-time fetch: vendored means vendored. Automat
 - **Pull requests** target `main`. The repo is rebase-merge only, so keep the branch history tidy — it will land on `main` as-is.
 - **CI** runs on every push and PR (`.github/workflows/ci.yml`): security audit (`npm audit --omit=dev`), lint, typecheck, test, build. All must pass before merge.
 - **Deployment** to GitHub Pages runs automatically on push to `main` via `.github/workflows/deploy.yml`.
+
+## Lighthouse CI (mobile quality gates)
+
+Pull requests that change `src/**`, `public/**`, `astro.config.mjs`, or the Lighthouse config itself trigger `.github/workflows/lighthouse.yml`, which builds the site, serves `dist/`, and runs Lighthouse against three representative pages at a mobile viewport with 4G throttling. The run posts a scores table as a PR comment and fails the PR if any page drops below the thresholds.
+
+**Thresholds** (per `hq/docs/website/prd.md` § QA-06 — private HQ repo):
+
+| Category | Minimum |
+|----------|---------|
+| Performance | 95 |
+| Accessibility | 100 |
+| Best Practices | 95 |
+| SEO | 95 |
+
+**Viewport**: 375×667 (iPhone SE-class), `devicePixelRatio: 2`, Lighthouse "Slow 4G" simulated throttling (150ms RTT, 1.6 Mbps, 4× CPU slowdown), median of 3 runs per page.
+
+**Target pages**:
+
+- `/` — Home
+- `/blog/` — Blog index
+- `/blog/sample-post/` — representative blog post
+
+**Run locally**:
+
+```bash
+npm run build
+npx lhci autorun
+```
+
+The CLI emits a temporary-public-storage URL per page at the end of the run; inspect the full report there. Local output lives under `.lighthouseci/` (gitignored).
+

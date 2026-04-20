@@ -6,6 +6,9 @@ dist/
 # Astro generated types
 .astro/
 
+# Lighthouse CI output
+.lighthouseci/
+
 # Temporary scratch files
 .tmp/*
 # Scoped exception: the PDR-006 branch-build work requires visual-compare

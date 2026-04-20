@@ -1,0 +1,113 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'astro.config.mjs'
+      - 'lighthouserc.json'
+      - '.github/workflows/lighthouse.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lighthouse:
+    name: Lighthouse mobile gates (QA-06)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun
+
+      - name: Post Lighthouse scores to PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const manifestPath = '.lighthouseci/manifest.json';
+            if (!fs.existsSync(manifestPath)) {
+              core.warning('No Lighthouse manifest found — skipping PR comment.');
+              return;
+            }
+
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const representative = manifest.filter(run => run.isRepresentativeRun);
+
+            if (representative.length === 0) {
+              core.warning('Manifest contains no representative runs — skipping PR comment.');
+              return;
+            }
+
+            const pct = (s) => (s === null || s === undefined) ? 'n/a' : Math.round(s * 100);
+            const bar = (s, threshold) => {
+              if (s === null || s === undefined) return '';
+              return Math.round(s * 100) >= threshold ? ' ✅' : ' ❌';
+            };
+
+            const rows = representative.map(run => {
+              const s = run.summary;
+              const url = new URL(run.url).pathname || '/';
+              return `| \`${url}\` | ${pct(s.performance)}${bar(s.performance, 95)} | ${pct(s.accessibility)}${bar(s.accessibility, 100)} | ${pct(s['best-practices'])}${bar(s['best-practices'], 95)} | ${pct(s.seo)}${bar(s.seo, 95)} |`;
+            });
+
+            const marker = '<!-- lighthouse-ci-report -->';
+            const body = [
+              marker,
+              '### Lighthouse CI results',
+              '',
+              'Mobile viewport 375×667, 4G throttling (median of 3 runs).',
+              '',
+              '| Page | Performance (≥95) | Accessibility (=100) | Best Practices (≥95) | SEO (≥95) |',
+              '|------|-------------------|----------------------|----------------------|-----------|',
+              ...rows,
+              '',
+              'Thresholds per `hq/docs/website/prd.md` § QA-06 (private HQ repo).',
+              '',
+              `Run: \`${context.runId}\` | Commit: \`${context.sha.slice(0, 7)}\``,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.startsWith(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                comment_id: existing.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
