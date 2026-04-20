@@ -179,6 +179,12 @@ const hasPosts = posts.length > 0;
     var(--touch-target) to satisfy REQ-A11Y-05 / REQ-MOB-03 via the
     canonical token (REQ-MOB-04). 480px+: inline-flex (original).
   */
+  /*
+    Color uses --color-link (not --color-accent) to clear WCAG 1.4.3
+    4.5:1 on --color-bg. --color-accent remains the brand-signature
+    token per PDR-004; --color-link is the darkened variant for
+    functional text links. See tokens.css for rationale.
+  */
   .cta-link {
     display: flex;
     width: 100%;
@@ -187,7 +193,7 @@ const hasPosts = posts.length > 0;
     min-height: var(--touch-target);
     font-size: var(--text-lg);
     font-weight: 600;
-    color: var(--color-accent);
+    color: var(--color-link);
     text-decoration: none;
     padding: var(--space-3) var(--space-6);
     border-radius: var(--radius-md);

@@ -13,8 +13,23 @@
   --color-bg: #fafaf9;
   --color-text: #1e1e1e;
   --color-accent: #e85d2a;
+  /*
+    --color-link darkens Signal Orange (--color-accent) for WCAG 1.4.3
+    on functional text links where 4.5:1 is required. --color-accent
+    remains the brand-signature token per PDR-004 (Orange Accent Pattern);
+    do NOT alter it here. Links use --color-link; tagline / pull-quote /
+    pillar-badge / accent words keep --color-accent.
+    #c34a1f on #fafaf9 = 4.73:1. Dark mode already passes on #2a2a2a
+    (4.57:1), so --color-link matches --color-accent there.
+  */
+  --color-link: #c34a1f;
   --color-surface: #f5f3ef;
-  --color-muted: #6b7280;
+  /*
+    --color-muted nudged from #6b7280 → #6a6f76 to clear WCAG 1.4.3
+    4.5:1 on --color-surface (was 4.36:1). Brand role (subordinate
+    hierarchy) unchanged. 4.86:1 on --color-surface, 5.16:1 on --color-bg.
+  */
+  --color-muted: #6a6f76;
   --color-teal: #2aafaa;
   --color-amber: #f5a623;
 
@@ -93,6 +108,12 @@
   --color-bg: #2a2a2a;
   --color-text: #ededed;
   --color-accent: #f06937;
+  /*
+    Dark-mode accent already clears 4.5:1 on --color-bg (#f06937 on
+    #2a2a2a = 4.57:1), so --color-link mirrors --color-accent here;
+    only light mode needs a separately darkened value.
+  */
+  --color-link: var(--color-accent);
   --color-surface: #363636;
   --color-muted: #9ca3af;
   --color-teal: #3cc4be;
