@@ -61,9 +61,18 @@
     width: 100%;
   }
 
+  /*
+    Active filter chips — mobile-first stacking. Base (<640px) stacks each
+    chip full-width with the × glyph pushed right via space-between; at
+    640px+ chips flow inline per ux-architecture.md § Mobile § Blog Index
+    (Pattern A posture: nothing hidden, touch-target ≥44px per REQ-MOB-03).
+    The 640px threshold is blog-index-specific (canonical tokens are 480/
+    768/1024; the 640-band is a page-local boundary from the spec).
+  */
   .filter-chips {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--space-2);
     margin-bottom: var(--space-6);
   }
@@ -74,11 +83,12 @@
   }
 
   .filter-chip {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    min-height: 44px;
+    min-height: var(--touch-target);
     font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-text);
@@ -92,6 +102,19 @@
   .filter-chip:hover {
     background-color: var(--color-muted);
     color: var(--color-bg);
+  }
+
+  @media (min-width: 640px) {
+    .filter-chips {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      justify-content: flex-start;
+    }
   }
 
   .filter-chip-x {
@@ -129,10 +152,18 @@
     }
   }
 
+  /*
+    Pagination — mobile-first full-width row. Base (<640px) uses
+    space-between so Previous anchors to the left, Next to the right, and
+    the pages container sits between (wrapping if the full "< Previous
+    1 2 3 ... N Next >" pattern won't fit on one line at narrow widths).
+    At 640px+ pagination returns to centered per the pre-PDR-006 layout
+    (spec: "Pagination inline" at 640-767px, unchanged at 768px+).
+  */
   .pagination {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: var(--space-2);
     margin-top: var(--space-8);
     flex-wrap: wrap;
@@ -146,10 +177,16 @@
     display: none;
   }
 
+  @media (min-width: 640px) {
+    .pagination {
+      justify-content: center;
+    }
+  }
+
   .pagination-btn {
     padding: var(--space-2) var(--space-4);
-    min-height: 44px;
-    min-width: 44px;
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
     font-size: var(--text-sm);
     font-weight: 500;
     color: var(--color-text);
@@ -174,7 +211,9 @@
 
   .pagination-pages {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: var(--space-1);
   }
 
@@ -182,8 +221,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
     padding: 0 var(--space-2);
     font-size: var(--text-sm);
     font-weight: 500;
