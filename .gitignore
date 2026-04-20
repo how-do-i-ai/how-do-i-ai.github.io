@@ -8,7 +8,7 @@ dist/
 
 # Temporary scratch files
 .tmp/*
-# Scoped exception: the PDR-006 branch-build PR (#98) requires visual-compare
+# Scoped exception: the PDR-006 branch-build work requires visual-compare
 # screenshots as a committed deliverable so GitHub renders them inline.
 !.tmp/branch-build-screenshots/
 
