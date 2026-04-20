@@ -33,9 +33,17 @@
   --color-teal: #2aafaa;
   --color-amber: #f5a623;
 
-  /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  /*
+    Typography — 'InterFallback' / 'JetBrainsMonoFallback' are local
+    metrics-matched fallbacks declared in global.css. They render with
+    Inter's / JetBrains Mono's exact ascent/descent/size metrics so the
+    font-swap is visually imperceptible. This locks Lighthouse LCP at
+    first paint (~FCP) instead of post-swap re-layout.
+  */
+  --font-sans: 'Inter', 'InterFallback', system-ui, -apple-system, sans-serif;
+  --font-mono:
+    'JetBrains Mono', 'JetBrainsMonoFallback', ui-monospace, 'SFMono-Regular',
+    monospace;
 
   /* Font sizes — modular scale (base 1rem, ratio ~1.25) */
   --text-xs: 0.75rem;
