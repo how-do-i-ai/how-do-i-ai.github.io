@@ -6,6 +6,15 @@ dist/
 # Astro generated types
 .astro/
 
+# Playwright test artifacts (reports, traces, screenshots from failed runs).
+# Baseline images under tests/visual/__baselines__/ are committed and
+# NOT ignored.
+test-results/
+playwright-report/
+playwright/.cache/
+tests/visual/__baselines__/**/*-actual.png
+tests/visual/__baselines__/**/*-diff.png
+
 # Temporary scratch files
 .tmp/*
 # Scoped exception: the PDR-006 branch-build work requires visual-compare
