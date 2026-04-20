@@ -50,7 +50,9 @@ const channels: Channel[] = [
   },
 ];
 
-const currentYear = new Date().getFullYear();
+// In static output this value is baked in at build time and updates on rebuild.
+// UTC avoids off-by-one around New Year depending on build-machine timezone.
+const currentYear = new Date().getUTCFullYear();
 ---
 
 <footer class="site-footer">
@@ -135,6 +137,12 @@ const currentYear = new Date().getFullYear();
     font-size: var(--text-sm);
     color: var(--color-muted);
     margin: 0;
+  }
+
+  /* Copyright always takes its own row so it never perturbs the
+     justify-content: space-between distribution of other sections. */
+  .copyright {
+    flex-basis: 100%;
   }
 
   .footer-primary {
