@@ -61,5 +61,36 @@ No automation, no symlink, no build-time fetch: vendored means vendored. Automat
 - **Branch names**: `{type}/{issue-number}-{short-slug}` (e.g., `feat/63-jsonld-structured-data`, `docs/76-hq-cross-repo-setup`).
 - **Commit subjects**: `(type) imperative lowercase description` (e.g., `(docs) add CONTRIBUTING`, `(feat) replace placeholder OG with Pass-2 brand image`). Types in use: `feat`, `fix`, `docs`, `chore`, `refactor`.
 - **Pull requests** target `main`. The repo is rebase-merge only, so keep the branch history tidy — it will land on `main` as-is.
-- **CI** runs on every push and PR (`.github/workflows/ci.yml`): security audit (`npm audit --omit=dev`), lint, typecheck, test, build. All must pass before merge.
+- **CI** runs on every push and PR (`.github/workflows/ci.yml`): security audit (`npm audit --omit=dev`), lint, typecheck, unit tests (`npm run test`), build, and visual regression (`npx playwright test`). All must pass before merge.
 - **Deployment** to GitHub Pages runs automatically on push to `main` via `.github/workflows/deploy.yml`.
+
+## Visual regression baselines
+
+Playwright screenshot baselines under `tests/visual/__baselines__/` guard against unintended layout/token shifts (see [`tests/visual/README.md`](./tests/visual/README.md) for the full design rationale, width list, and why chromium-only).
+
+### When baselines legitimately need updating
+
+Any PR that intentionally changes the visual surface — tokens, typography, nav, spacing, dark-mode variants, new content components — will diff the relevant baselines. That is the gate working as intended. The reviewer's job is to decide whether the diff matches the PR's stated intent.
+
+### Update procedure
+
+1. **Make your code change** on a feature branch. Push and open the PR.
+2. **CI will fail** on the `Visual regression tests` step for any snapshots that shifted. Download the `playwright-report` artifact from the failing run to see side-by-side expected/actual/diff views.
+3. **If the diff is intentional**, regenerate the baselines locally using the official Playwright Linux container (baselines MUST be Linux-generated — macOS rasterization differs from CI's Ubuntu):
+
+   ```bash
+   # Run from the repo root. Version tag must match devDependencies.@playwright/test.
+   docker run --rm \
+     -v "$(pwd)":/work \
+     -w /work \
+     -e CI=true \
+     mcr.microsoft.com/playwright:v1.59.1-noble \
+     sh -c "npm ci && npm run test:visual:update"
+   ```
+
+4. **Commit the updated `.png` files** under `tests/visual/__baselines__/` with a subject that names the visual change (e.g., `(chore) refresh visual baselines for PDR-007 nav update`). Push; CI should now pass.
+5. **Call out the baseline churn in the PR description** so reviewers know the visual change is deliberate and the diff they see in the artifact is what was approved.
+
+### When NOT to update baselines
+
+If you did not intend a visual change and CI shows diffs, the PR has introduced a regression — fix the code, not the baseline.
