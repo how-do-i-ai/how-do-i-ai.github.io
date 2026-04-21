@@ -16,11 +16,7 @@
  * review so any intended visual shift is explicitly approved.
  */
 import { test, expect } from '@playwright/test';
-
-/** Viewport widths (CSS px). See PRD § QA-09 / PDR-006 constraint 6. */
-const WIDTHS = [
-  320, 375, 414, 480, 500, 600, 640, 700, 767, 768, 1024, 1440,
-] as const;
+import { WIDTHS } from '../config/widths';
 
 type Mode = 'light' | 'dark';
 const MODES: readonly Mode[] = ['light', 'dark'] as const;
