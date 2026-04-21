@@ -68,18 +68,24 @@ No automation, no symlink, no build-time fetch: vendored means vendored. Automat
 
 Four binary gates run on every PR — any failure blocks merge. Thresholds come from `hq/docs/website/prd.md` §§ QA-06..QA-09 (private HQ repo).
 
-| Gate | Scope | Command |
-|------|-------|---------|
-| **QA-06 Lighthouse** | Performance ≥95, Accessibility =100, Best Practices ≥95, SEO ≥95 at 375×667 mobile with Slow-4G throttling, median of 3 runs per page | `npm run test:lighthouse` |
-| **QA-07 Touch-target audit** | Every `<a> / <button> / <details summary> / <input>` on `/`, `/blog/`, `/blog/sample-post/` ≥ 44×44px at 320/375/414/768 | `npm run test:touch-targets` |
-| **QA-08 axe-core** | Zero WCAG 2.2 AA violations (cumulative `wcag2a / wcag2aa / wcag21a / wcag21aa / wcag22aa` rules) on the same 3 pages × 320/375/414/768/1024 × light + dark = 30 permutations | `npm run test:a11y` |
-| **QA-09 Visual regression** | 72 Playwright screenshot baselines (3 pages × 12 widths × 2 color modes) — see § below | `npm run test:visual` |
+| Gate                         | Scope                                                                                                                                                                         | Command                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **QA-06 Lighthouse**         | Performance ≥95, Accessibility =100, Best Practices ≥95, SEO ≥95 at 375×667 mobile with Slow-4G throttling, median of 3 runs per page                                         | `npm run test:lighthouse`    |
+| **QA-07 Touch-target audit** | Every `<a> / <button> / <details summary> / <input>` on `/`, `/blog/`, `/blog/sample-post/` ≥ 44×44px at 320/375/414/768                                                      | `npm run test:touch-targets` |
+| **QA-08 axe-core**           | Zero WCAG 2.2 AA violations (cumulative `wcag2a / wcag2aa / wcag21a / wcag21aa / wcag22aa` rules) on the same 3 pages × 320/375/414/768/1024 × light + dark = 30 permutations | `npm run test:a11y`          |
+| **QA-09 visual regression**  | 72 Playwright screenshot baselines (3 pages × 12 widths × 2 color schemes) — see § below                                                                                      | `npm run test:visual`        |
 
 Combined local run: `npm run test:e2e` (QA-07/08/09) + `npm run test:lighthouse` (QA-06). Both expect Chromium to be installed — first run `npx playwright install --with-deps chromium`.
 
-## Visual regression baselines
+### QA-10 UI audit tooling (PDR-007) — phased rollout
 
-Playwright screenshot baselines under `tests/visual/__baselines__/` guard against unintended layout/token shifts (see [`tests/visual/README.md`](./tests/visual/README.md) for the full design rationale, width list, and why chromium-only).
+PDR-007 adopts a second, distinct class of gate — **audit tooling** — to complement the four regression gates above. QA-09 answers "did anything change relative to baseline?" QA-10 answers "is the baseline itself correct?" They coexist.
+
+**QA-10 is planned and rolling out per phase; it is not a CI gate today.** Six components land across Phase 1 (install-now), Phase 2 (compound value), and Phase 3 (tactical coverage). Each component wires into CI as it ships per its tracking issue. Surface files will split across `tests/audit/` (Playwright specs + runbooks; directory will be created by Phase 1 components), `scripts/` (pure-Node audits), and `tests/visual/` (Phase 2 style sidecars + Phase 3 rendering-mode baselines colocated with QA-09 PNGs). Full component map, allowlist mechanism, runbook index, and per-phase governance: [`tests/visual/README.md`](./tests/visual/README.md). Source of truth: `hq/docs/decisions/PDR-007-ui-audit-strategy.md` and `hq/docs/website/audit-tooling-design.md` (private HQ repo).
+
+## Visual regression and UI audit tooling
+
+Playwright screenshot baselines under `tests/visual/__baselines__/` and the phased QA-10 audit surface (in `tests/audit/`, `scripts/`, and `tests/visual/`) together guard against unintended layout/token shifts AND drift of the baseline itself from design intent. See [`tests/visual/README.md`](./tests/visual/README.md) for the full QA-09 / QA-10 distinction, the per-component map, the shared Linux-baseline rule, and why chromium-only.
 
 ### When baselines legitimately need updating
 
