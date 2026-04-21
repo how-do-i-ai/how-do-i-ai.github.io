@@ -45,12 +45,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Playwright-driven gates: QA-09 visual regression +
-      # QA-08 axe-core WCAG 2.2 AA + QA-07 touch-target audit +
-      # QA-10.1 route clustering + QA-10.3 invariant specs (PDR-007
-      # Phase 1 audit tooling). A single `playwright test` invocation
-      # covers every suite because projects in playwright.config.ts
-      # use testMatch to route specs to the right project(s).
+      # Playwright-driven regression gates (non-audit): QA-09 visual
+      # regression + QA-08 axe-core WCAG 2.2 AA + QA-07 touch-target
+      # audit. QA-10.1 route clustering and QA-10.3 invariant specs
+      # are Playwright projects too, but they run as separate named
+      # steps in the "QA-10 audit steps" block below so each audit
+      # component reports its status distinctly in the CI log.
+      # Explicit `--project` flags limit this step to the non-audit
+      # Playwright projects defined in playwright.config.ts.
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -70,8 +72,14 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: QA-07 / QA-08 / QA-09 / QA-10.1 / QA-10.3 — Playwright suites
-        run: npx playwright test
+      - name: QA-07 / QA-08 / QA-09 — Playwright suites
+        run: |
+          npx playwright test \
+            --project=chromium \
+            --project=touch-targets-320 \
+            --project=touch-targets-375 \
+            --project=touch-targets-414 \
+            --project=touch-targets-768
 
       - name: Upload Playwright HTML report
         if: ${{ !cancelled() }}
@@ -89,24 +97,64 @@ jobs:
           path: test-results/
           retention-days: 14
 
-      # QA-10.2 Critical widths audit (PDR-007 Phase 1). Pure-Node; no
-      # Playwright, no browser. Reads dist/_astro/*.css from the Build
-      # step above. Cross-cutting audit orchestration (cache reuse,
-      # unified report artifact, aggregator) lands in #127 alongside
-      # the QA-10.1 and QA-10.3 steps.
-      - name: QA-10.2 — Critical widths audit
-        run: node scripts/extract-widths.mjs
+      # --------------------------------------------------------------
+      # QA-10 audit steps — PDR-007 Phase 1 ("install-now" components).
+      #
+      # Each component runs as an individual named step so its exit
+      # status is reported distinctly in the CI log. Steps invoke the
+      # corresponding `test:audit:*` package.json script (per-component
+      # scripts established across #120/#121/#122; meta-script family
+      # in #126) so local dev and CI share the same entry points —
+      # see audit-tooling-design.md § 6 Item 10 (meta-scripts) and § 6
+      # Item 11 Option A (extend existing `build` job).
+      #
+      # Cache sharing: the Playwright browser cache is populated above
+      # (step "Cache Playwright browsers") and reused across every
+      # Playwright invocation — no duplicate browser install. The
+      # `test:audit:*` scripts each begin with `npm run build` for
+      # local-dev ergonomics; because all steps run in the same job
+      # filesystem, those build calls share Astro's Vite cache
+      # (`.astro/`, `node_modules/.vite/`) already populated by the
+      # "Build" step above — the audit-step rebuilds are therefore
+      # partially cache-warmed: Vite's dep graph and Astro's `.astro/`
+      # content collections are reused, while Rollup bundling and SSG
+      # emission re-run. We prefer this small CI-time cost over
+      # diverging local vs CI entry points.
+      #
+      # Audit-only vs regression-gated (PDR-007 Constraint 4 /
+      # audit-tooling-design.md § 6 Item 11): once a component is
+      # adopted into a Phase, it runs on EVERY PR and gates merge.
+      # There is no audit-only skip mode — that would defeat the
+      # gate. The only optional execution pattern is path-filtering
+      # (run a component only when relevant source files change),
+      # decided per-component at each phase gate based on the
+      # CI-time revisit thresholds in PDR-007. No Phase 1 component
+      # uses path-filtering today.
+      #
+      # Phase 2 (QA-10.4, QA-10.5) and Phase 3 (QA-10.6) extend this
+      # block in their own tracking issues — not here.
+      # --------------------------------------------------------------
 
-      # Scoped to this audit's single report file to keep the artifact
-      # boundary explicit; #127 can replace this with a unified
-      # tests/audit/__reports__/*.json upload when QA-10.1 + QA-10.3
-      # land alongside.
-      - name: Upload QA-10.2 widths audit report
-        if: ${{ !cancelled() }}
+      - name: QA-10.1 — Route clustering
+        run: npm run test:audit:routes
+
+      - name: QA-10.2 — Critical widths
+        run: npm run test:audit:widths
+
+      - name: QA-10.3 — Invariant specs
+        run: npm run test:audit:invariants
+
+      # Unified artifact upload — covers routes-report.json,
+      # widths-report.json, invariants-report.json. Triggered on
+      # failure only so reviewers can pull per-run reports without
+      # re-running the job. `if-no-files-found: ignore` accommodates
+      # early-failing audits that exit before writing their report.
+      - name: Upload QA-10 audit reports
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: qa-10-2-widths-report
-          path: tests/audit/__reports__/widths-report.json
+          name: qa-10-audit-reports
+          path: tests/audit/__reports__/*.json
           retention-days: 14
           if-no-files-found: ignore
 
