@@ -1,4 +1,12 @@
 {
   "$schema": "./threshold-significance.schema.json",
-  "allowlist": []
+  "allowlist": [
+    {
+      "threshold_px": 639,
+      "reason": "Lower-bound-exclusive pair to QA-09's min-width:640 at Footer.astro mobile-collapse layout (PDR-006 § Mobile § Footer). QA-09 already baselines 320-600 (mobile-stacked) and 640+ (desktop-row); the 639 boundary is a CSS implementation detail with no independent layout state.",
+      "source_file": "dist/_astro/about.TrGEe_8_.css",
+      "added": "2026-04-21",
+      "review_by": "2026-07-20"
+    }
+  ]
 }

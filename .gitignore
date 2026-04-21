@@ -15,6 +15,10 @@ playwright/.cache/
 tests/visual/__baselines__/**/*-actual.png
 tests/visual/__baselines__/**/*-diff.png
 
+# QA-10.* audit per-run reports. The JSON artifact is captured by CI
+# on failure; nothing is committed. See PDR-007 / audit-tooling-design.
+tests/audit/__reports__/
+
 # Lighthouse CI run output
 .lighthouseci/
 

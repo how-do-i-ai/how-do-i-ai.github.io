@@ -20,7 +20,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "astro check",
-    "check:playwright-version-parity": "node scripts/check-playwright-version-parity.mjs"
+    "check:playwright-version-parity": "node scripts/check-playwright-version-parity.mjs",
+    "test:audit:widths": "npm run build && node scripts/extract-widths.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
@@ -34,6 +35,7 @@
     "@playwright/test": "^1.59.1",
     "eslint": "^10.2.0",
     "eslint-plugin-astro": "^1.7.0",
+    "postcss": "8.5.8",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.9.3",

@@ -88,6 +88,27 @@ jobs:
           path: test-results/
           retention-days: 14
 
+      # QA-10.2 Critical widths audit (PDR-007 Phase 1). Pure-Node; no
+      # Playwright, no browser. Reads dist/_astro/*.css from the Build
+      # step above. Cross-cutting audit orchestration (cache reuse,
+      # unified report artifact, aggregator) lands in #127 alongside
+      # the QA-10.1 and QA-10.3 steps.
+      - name: QA-10.2 — Critical widths audit
+        run: node scripts/extract-widths.mjs
+
+      # Scoped to this audit's single report file to keep the artifact
+      # boundary explicit; #127 can replace this with a unified
+      # tests/audit/__reports__/*.json upload when QA-10.1 + QA-10.3
+      # land alongside.
+      - name: Upload QA-10.2 widths audit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-10-2-widths-report
+          path: tests/audit/__reports__/widths-report.json
+          retention-days: 14
+          if-no-files-found: ignore
+
       # QA-06 Lighthouse mobile gates. Builds once at step above; LHCI
       # runs its own static server from ./dist, so no preview needed.
       - name: QA-06 — Lighthouse mobile gates
