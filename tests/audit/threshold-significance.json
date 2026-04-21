@@ -1,0 +1,4 @@
+{
+  "$schema": "./threshold-significance.schema.json",
+  "allowlist": []
+}
