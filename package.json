@@ -16,6 +16,7 @@
     "test:touch-targets": "npm run build && playwright test tests/a11y/touch-targets.spec.ts",
     "test:audit:routes": "npm run build && playwright test --project=audit-routes",
     "test:audit:routes:update": "npm run build && UPDATE_BASELINE=1 playwright test --project=audit-routes",
+    "test:audit:invariants": "npm run build && playwright test --project=audit-invariants",
     "test:lighthouse": "npm run build && lhci autorun",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Unified Playwright configuration for QA-07 / QA-08 / QA-09 / QA-10.1.
+ * Unified Playwright configuration for QA-07 / QA-08 / QA-09 / QA-10.1 / QA-10.3.
  *
  * Four test suites share this config and one `astro preview` webServer:
  *   - `tests/visual/**`        — QA-09 visual regression baselines.
@@ -13,11 +13,16 @@ import { defineConfig, devices } from '@playwright/test';
  *                                sitemap walk + DOM skeleton hash (per
  *                                PDR-007 Phase 1; shares the Desktop Chrome
  *                                device with the visual suite).
+ *   - `tests/audit/invariants.spec.ts` + `invariants.reverse.spec.ts` —
+ *                                QA-10.3 boolean layout invariants
+ *                                (iterate viewports in-spec; one project).
  *
  * Visual + axe + audit-routes run in chromium projects (Desktop Chrome
  * device metrics); touch-targets runs once per mobile viewport because
  * its spec reads the viewport from the project, not from in-spec
- * iteration.
+ * iteration. audit-invariants runs serially in a single worker so the
+ * per-run JSON report (tests/audit/__reports__/invariants-report.json)
+ * aggregates cleanly across the flat test list.
  *
  * Per `tests/visual/README.md`: snapshotPathTemplate keeps baselines at
  * `tests/visual/__baselines__/` regardless of the new `./tests` testDir.
@@ -73,6 +78,18 @@ export default defineConfig({
         hasTouch: true,
       },
     })),
+    // QA-10.3: invariants iterate viewports + modes in-spec, so the
+    // project itself carries no viewport. fullyParallel: false + single
+    // test file with `test.describe.configure({ mode: 'serial' })` keep
+    // report emission deterministic across workers.
+    {
+      name: 'audit-invariants',
+      testMatch: /audit\/invariants(\.reverse)?\.spec\.ts$/,
+      fullyParallel: false,
+      use: {
+        browserName: 'chromium' as const,
+      },
+    },
   ],
 
   // `astro preview` serves the `dist/` build output — caller must run
