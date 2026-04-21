@@ -361,6 +361,9 @@ test.describe('QA-10.1 Route Clustering', () => {
               `archetype.`,
           );
         }
+        lines.push(
+          `  Procedure: tests/audit/ROUTE-CLUSTERS-RUNBOOK.md § Registering a new archetype.`,
+        );
         throw new Error(lines.join('\n'));
       }
 
@@ -380,6 +383,8 @@ test.describe('QA-10.1 Route Clustering', () => {
             `  If this drift is intentional, update route_assignments to ` +
               `"${driftArchetype}". Otherwise, a recent change converged two ` +
               `archetypes — revisit the structural difference.`,
+            `  Procedure: tests/audit/ROUTE-CLUSTERS-RUNBOOK.md § Merging archetypes ` +
+              `(intentional) or § Debugging procedure (investigate the difference).`,
           ].join('\n'),
         );
       }
@@ -397,6 +402,8 @@ test.describe('QA-10.1 Route Clustering', () => {
             `      mcr.microsoft.com/playwright:v1.59.1-noble \\`,
             `      sh -c "npm ci && UPDATE_BASELINE=1 npm run test:audit:routes"`,
             `  and commit the updated tests/audit/__baselines__/route-clusters.json.`,
+            `  Procedure: tests/audit/ROUTE-CLUSTERS-RUNBOOK.md § Normalization changes ` +
+              `(if the walker changed) or § Debugging procedure (to locate the structural diff).`,
           ].join('\n'),
         );
       }
