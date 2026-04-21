@@ -25,7 +25,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { invariant1Predicate } from './helpers';
+import { invariant1Predicate, invariant6Predicate } from './helpers';
 import { SELECTORS } from './selectors';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -506,6 +506,82 @@ test('Invariant 5: .site-nav subtree has no sticky or fixed descendants', async 
   });
   assertAllRunsPassed(
     'Invariant 5 violated — a .site-nav descendant computes to position: sticky or fixed:',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 6 — .latest-section eyebrow label alignment.
+ *
+ * Issue #147 (supersedes #146). PDR-007 § Consequences — the home-page
+ * QA-09 baselines encoded the "LATEST" eyebrow outdent as part of the
+ * baseline itself ("the bug IS the baseline"). Pixel-regression therefore
+ * cannot catch it; this invariant gates on the design intent directly.
+ *
+ * Design intent: the `LATEST` eyebrow label above the featured post card
+ * aligns horizontally with the card's content origin (not the card's
+ * outer edge), and is never closer than 16px to the viewport-left. The
+ * eyebrow is the label FOR the card's content — misalignment with the
+ * card edge creates the outdent visible at wide widths and the edge-bleed
+ * visible at mobile widths (320-414) reported in #146/#147.
+ *
+ * Predicate: two boolean tests AND-combined, per invariant6Predicate in
+ * helpers.ts:
+ *   1. |eyebrow.left - cardContentRoot.left| ≤ 2px (tolerance absorbs
+ *      sub-pixel font-metric drift between macOS and Linux Chromium —
+ *      see tests/visual/README.md § "Baselines must be Linux-generated").
+ *   2. eyebrow.left ≥ 16px (viewport-left gutter floor).
+ *
+ * Viewports per issue #147 proposed spec: 320, 375, 414, 480, 600, 768,
+ * 1024, 1440 — the eight that bracket the narrow edge-bleed band, the
+ * mid-range collapse band, and the wide-centered band where the outdent
+ * was largest in the UI review. Light + dark both iterated so
+ * dark-mode-only regressions surface (no known current regression class
+ * in dark mode, but the invariant is modality-neutral).
+ *
+ * Reverse coverage: invariants.reverse.spec.ts injects the pre-fix
+ * pattern (zero inline-start inset on the eyebrow) and asserts this
+ * predicate detects the outdent with rich measurements.
+ * ------------------------------------------------------------------------- */
+test('Invariant 6: .latest-section eyebrow aligns with post-card content and respects viewport-left gutter', async ({
+  browser,
+}) => {
+  const viewports = [320, 375, 414, 480, 600, 768, 1024, 1440];
+  const modes: Mode[] = ['light', 'dark'];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    for (const mode of modes) {
+      const { context, page } = await openHome(browser, { width, mode });
+      try {
+        const measurement = await page.evaluate(invariant6Predicate, {
+          sectionSel: SELECTORS.latestSection,
+          eyebrowSel: SELECTORS.latestEyebrow,
+          cardContentSel: SELECTORS.latestCardContentRoot,
+          tolerancePx: 2,
+          minLeftPx: 16,
+        });
+        runs.push({
+          viewport: String(width),
+          mode,
+          pass: measurement.pass,
+          measurements: measurement,
+        });
+      } finally {
+        await context.close();
+      }
+    }
+  }
+
+  results.push({
+    id: 'invariant-6',
+    title:
+      '.latest-section eyebrow aligns with post-card content and clears viewport-left gutter',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 6 violated — .latest-section eyebrow misaligned with post-card content origin or too close to viewport-left (issue #147 class):',
     runs,
   );
 });
