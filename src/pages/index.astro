@@ -33,8 +33,10 @@ const hasPosts = posts.length > 0;
 
   {
     featuredPost && (
-      <section class="featured" aria-label="Featured post">
-        <h2 class="section-heading">Latest</h2>
+      <section class="latest-section" aria-label="Featured post">
+        <h2 class="section-heading" data-eyebrow>
+          Latest
+        </h2>
         <PostCardFeatured post={featuredPost} />
       </section>
     )
@@ -117,22 +119,35 @@ const hasPosts = posts.length > 0;
   }
 
   /*
-    Featured post section.
-    Base (<480px): edge-to-edge — card visually spans viewport minus its own
-    internal padding, per ux-architecture.md § Mobile § Home Page
-    ("Featured card: full-width, single column").
-    480px+: horizontal gutter restored via var(--space-4).
+    Latest post section — "LATEST" eyebrow above the featured post card.
+    Base (<480px): card is edge-to-edge — full-width, single column — per
+    ux-architecture.md § Mobile § Home Page ("Featured card: full-width,
+    single column"). 480px+: horizontal gutter restored via var(--space-4).
+
+    The .section-heading inside this section is the "LATEST" eyebrow
+    label for the post card below it. To satisfy issue #147 Invariant 6
+    (QA-10.3) — eyebrow alignment with the card's content edge and a
+    ≥16px viewport-left gutter — the eyebrow applies its OWN inline-start
+    inset equal to the card's internal padding (var(--space-8)). This
+    way the eyebrow tracks the card's content origin instead of the
+    card's outer edge, at every viewport, regardless of whether the
+    section itself is edge-to-edge (mobile) or gutter-padded (≥480px) or
+    centered by max-width (≥768px).
   */
-  .featured {
+  .latest-section {
     max-width: 48rem;
     margin-inline: auto;
     padding: var(--space-8) 0;
   }
 
   @media (min-width: 480px) /* --bp-sm */ {
-    .featured {
+    .latest-section {
       padding: var(--space-8) var(--space-4);
     }
+  }
+
+  .latest-section .section-heading {
+    margin-inline-start: var(--space-8);
   }
 
   /* Recent posts section */

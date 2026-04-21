@@ -57,3 +57,79 @@ export const invariant1Predicate = ({
     violations,
   };
 };
+
+export type Invariant6Measurement =
+  | { pass: false; error: string }
+  | {
+      pass: boolean;
+      eyebrowLeft: number;
+      cardContentLeft: number;
+      delta: number;
+      tolerancePx: number;
+      toleranceOk: boolean;
+      minLeftPx: number;
+      minLeftOk: boolean;
+    };
+
+/**
+ * Invariant 6 predicate — `.latest-section` eyebrow alignment.
+ *
+ * Two boolean conditions, AND-combined:
+ *   1. |eyebrow.left - cardContentRoot.left| ≤ tolerancePx — the eyebrow
+ *      label tracks the card's content origin, not the card's outer edge.
+ *   2. eyebrow.left ≥ minLeftPx — the eyebrow never encroaches the
+ *      viewport-left gutter. Guards the mobile edge-bleed class.
+ *
+ * Both bounding rects are read via `getBoundingClientRect()`, which
+ * returns CSS-pixel coordinates relative to the viewport. The
+ * measurement is a two-number geometric read + two boolean tests; no
+ * distance-to-pixel conversion, no OS-dependent rasterization.
+ *
+ * tolerancePx absorbs sub-pixel font-metric drift between macOS and
+ * Linux Chromium (see tests/visual/README.md § "Baselines must be
+ * Linux-generated"). 2px is the AC-specified tolerance in issue #147.
+ */
+export const invariant6Predicate = ({
+  sectionSel,
+  eyebrowSel,
+  cardContentSel,
+  tolerancePx,
+  minLeftPx,
+}: {
+  sectionSel: string;
+  eyebrowSel: string;
+  cardContentSel: string;
+  tolerancePx: number;
+  minLeftPx: number;
+}): Invariant6Measurement => {
+  const section = document.querySelector(sectionSel);
+  if (!section)
+    return { pass: false, error: `latest-section not found: ${sectionSel}` };
+  const eyebrow = section.querySelector(eyebrowSel);
+  if (!eyebrow)
+    return {
+      pass: false,
+      error: `eyebrow not found under section: ${eyebrowSel}`,
+    };
+  const cardContent = section.querySelector(cardContentSel);
+  if (!cardContent)
+    return {
+      pass: false,
+      error: `card content root not found under section: ${cardContentSel}`,
+    };
+  const eRect = eyebrow.getBoundingClientRect();
+  const cRect = cardContent.getBoundingClientRect();
+  const delta = Math.abs(eRect.left - cRect.left);
+  const toleranceOk = delta <= tolerancePx;
+  const minLeftOk = eRect.left >= minLeftPx;
+  return {
+    pass: toleranceOk && minLeftOk,
+    eyebrowLeft: eRect.left,
+    cardContentLeft: cRect.left,
+    delta,
+    tolerancePx,
+    toleranceOk,
+    minLeftPx,
+    minLeftOk,
+  };
+};

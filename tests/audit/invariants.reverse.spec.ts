@@ -1,34 +1,39 @@
 /**
- * QA-10.3 reverse-test evidence — Invariant 1 detection proof.
+ * QA-10.3 reverse-test evidence — detection proofs for the invariant set.
  *
- * Issue #121 AC: "at least one invariant, when a fixture is deliberately
- * broken (e.g., temporary CSS change makes wordmark `font-weight: 400`),
- * fails with a measurement-rich message identifying the violation."
+ * Every reverse test here pairs with a forward invariant in
+ * `invariants.spec.ts` and proves that the shared predicate in
+ * `helpers.ts` actually detects its named failure class. The pattern:
+ * open the home page, inject a CSS override that recreates a specific
+ * pre-fix / broken geometry, run the SAME predicate the forward spec
+ * runs, assert `pass: false` plus rich measurements. Without the
+ * shared-predicate discipline (helpers.ts), the reverse test would
+ * vouch for a predicate that isn't the one gating CI.
  *
- * This spec injects a CSS rule that makes .wordmark-text's font-weight fall
- * below a `.pillar-link` (and below any other nav text-bearing node) and
- * then runs the Invariant 1 predicate against the broken DOM. The test
- * PASSES when the predicate CORRECTLY DETECTS the violation and surfaces
- * concrete measurements (weights, selectors, text previews).
+ * Coverage today:
+ *   - Invariant 1 (per issue #121 AC) — forced-normal wordmark weight.
+ *   - Invariant 6 (per issue #147 AC) — zero inline-start inset on the
+ *     .latest-section eyebrow (the pre-fix outdent pattern).
  *
  * Runs in the same `audit-invariants` Playwright project as the primary
- * spec, so it is exercised on every CI run — the existence of live
- * detection is a standing guarantee rather than a one-off demo.
+ * spec, so detection proofs are exercised on every CI run — they are
+ * standing guarantees rather than one-off demos.
  */
 import { test, expect, type Browser } from '@playwright/test';
 
-import { invariant1Predicate } from './helpers';
+import { invariant1Predicate, invariant6Predicate } from './helpers';
 import { SELECTORS } from './selectors';
 
 async function openHomeWithInjection(
   browser: Browser,
   css: string,
+  width = 480,
 ): Promise<{
   page: import('@playwright/test').Page;
   close: () => Promise<void>;
 }> {
   const context = await browser.newContext({
-    viewport: { width: 480, height: 900 },
+    viewport: { width, height: 900 },
     colorScheme: 'light',
     reducedMotion: 'reduce',
   });
@@ -118,6 +123,112 @@ test('reverse: Invariant 1 detects a forced-normal wordmark with rich measuremen
       pillarHit!.text.length,
       'pillar-link text preview reported',
     ).toBeGreaterThan(0);
+  } finally {
+    await close();
+  }
+});
+
+/**
+ * Reverse coverage for Invariant 6 — demonstrates that the predicate
+ * detects the pre-fix outdent pattern from issue #147.
+ *
+ * Pre-fix pattern (see git history for src/pages/index.astro when the
+ * section was `.featured` and the heading had no inline-start inset):
+ * the "LATEST" eyebrow sat flush against the section's content-box
+ * left edge, while the featured post card's own content began at
+ * `+var(--space-8)` (32px) inside the card's padding. Result: a
+ * visible outdent at every viewport ≥320px, and an edge-bleed class
+ * at <480px where the section had zero horizontal padding and the
+ * eyebrow sat at 0px from viewport-left.
+ *
+ * Inject CSS that forces the pre-fix geometry back (zero inline-start
+ * inset on the eyebrow) and assert Invariant 6 detects the violation
+ * with rich measurements (eyebrow.left, cardContent.left, delta).
+ *
+ * 1440px viewport: deliberately chosen so the absolute outdent is
+ * largest and the delta is unambiguous (the card-padding constant is
+ * viewport-independent, but at 1440 the "wide width" pattern named in
+ * #147's context block is the exact failure mode this invariant gates).
+ */
+test('reverse: Invariant 6 detects .latest-section eyebrow outdent with rich measurements', async ({
+  browser,
+}) => {
+  // Force the pre-fix geometry: zero the eyebrow's inline-start inset
+  // (both margin and padding, so the test is robust against whichever
+  // mechanism the source uses to align the eyebrow). Under the fixed
+  // design the eyebrow is inset by var(--space-8) ≈ 32px to match the
+  // card's content origin; zeroing that inset re-creates the outdent.
+  const breakingCss = `
+    .latest-section [data-eyebrow] {
+      margin-inline-start: 0 !important;
+      padding-inline-start: 0 !important;
+    }
+  `;
+  const { page, close } = await openHomeWithInjection(
+    browser,
+    breakingCss,
+    1440,
+  );
+
+  try {
+    const measurement = await page.evaluate(invariant6Predicate, {
+      sectionSel: SELECTORS.latestSection,
+      eyebrowSel: SELECTORS.latestEyebrow,
+      cardContentSel: SELECTORS.latestCardContentRoot,
+      tolerancePx: 2,
+      minLeftPx: 16,
+    });
+
+    expect(
+      measurement.pass,
+      `Invariant 6 FAILED to detect the injected outdent. Raw measurement: ${JSON.stringify(
+        measurement,
+        null,
+        2,
+      )}`,
+    ).toBe(false);
+
+    if ('error' in measurement) {
+      throw new Error(
+        `predicate short-circuited before measuring: ${measurement.error}`,
+      );
+    }
+
+    // Measurement richness: both absolute positions and the derived
+    // delta must be reported so a CI reviewer can see WHY the gate
+    // fired without re-running the spec locally.
+    expect(typeof measurement.eyebrowLeft, 'eyebrowLeft reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.cardContentLeft, 'cardContentLeft reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.delta, 'delta reported').toBe('number');
+
+    // The pre-fix pattern outdent is the card's own padding (≈32px);
+    // with a 2px tolerance, any delta ≥ ~30px is the named failure
+    // class. Assert a generous lower bound on the delta so the reverse
+    // test is robust against minor token drift if var(--space-8) ever
+    // changes (which itself would be a PDR-graded decision and would
+    // retire this reverse test alongside the invariant refinement).
+    expect(
+      measurement.delta,
+      'delta should be well above the 2px tolerance for this named regression class',
+    ).toBeGreaterThan(10);
+
+    // The specific geometric pattern for #147: card content sits
+    // strictly to the RIGHT of the eyebrow (card-padding outdent). If
+    // cardContent were left-of eyebrow, that would be a different
+    // regression class (eyebrow-overruns) and a different fix — so
+    // asserting the direction is part of the detection's specificity.
+    expect(
+      measurement.cardContentLeft,
+      `card content must sit right of eyebrow in this regression class (eyebrowLeft=${measurement.eyebrowLeft}, cardContentLeft=${measurement.cardContentLeft})`,
+    ).toBeGreaterThan(measurement.eyebrowLeft);
+
+    // Tolerance + min-left reported alongside, so the measurement blob
+    // is self-contained for post-hoc inspection.
+    expect(measurement.toleranceOk, 'toleranceOk must be false').toBe(false);
   } finally {
     await close();
   }
