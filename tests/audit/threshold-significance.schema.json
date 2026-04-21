@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QA-10.2 Critical Widths threshold allowlist",
+  "description": "Schema for tests/audit/threshold-significance.json — the allowlist of CSS media-query thresholds that QA-10.2 must tolerate as non-regressions. See tests/audit/THRESHOLD-ALLOWLIST.md for lifecycle rules and PDR-007 § Constraints 5 for the driving decision.",
+  "type": "object",
+  "required": ["allowlist"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file (tooling hint; not interpreted by QA-10.2)."
+    },
+    "allowlist": {
+      "type": "array",
+      "description": "Thresholds (in px) that QA-10.2 should classify as allowed rather than unhandled. Empty by default; entries are added via PR as allowlistable thresholds emerge.",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "threshold_px",
+        "reason",
+        "source_file",
+        "added",
+        "review_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "threshold_px": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The CSS media-query threshold value in px (em/rem normalized to px at 16px root)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this threshold is allowlisted rather than promoted to the QA-09 width set or removed from the CSS. One sentence is usually enough; name the source (e.g., third-party reset, intentional outlier, typo-under-repair)."
+        },
+        "source_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The built CSS file containing the @media rule that produces this threshold (e.g., dist/_astro/_id_.DamDMsb6.css). The hashed filename is fine — it documents provenance at the time of addition."
+        },
+        "added": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "ISO 8601 date (YYYY-MM-DD) the entry was added. Must be the PR merge day or the PR author's working date; back-dating is not permitted."
+        },
+        "review_by": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "ISO 8601 date (YYYY-MM-DD) the entry expires. Convention is `added` + 90 days. QA-10.2 fails when today > review_by; the reviewer then extends, promotes to QA-09 widths, or removes the entry (and fixes the CSS)."
+        }
+      }
+    }
+  }
+}
