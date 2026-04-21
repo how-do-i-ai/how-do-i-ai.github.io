@@ -14,6 +14,8 @@
     "test:visual:update": "npm run build && playwright test tests/visual --update-snapshots",
     "test:a11y": "npm run build && playwright test tests/a11y",
     "test:touch-targets": "npm run build && playwright test tests/a11y/touch-targets.spec.ts",
+    "test:audit": "npm run test:audit:routes && npm run test:audit:widths && npm run test:audit:invariants",
+    "test:audit:update": "npm run build && playwright test tests/audit --update-snapshots",
     "test:audit:routes": "npm run build && playwright test --project=audit-routes",
     "test:audit:routes:update": "npm run build && UPDATE_BASELINE=1 playwright test --project=audit-routes",
     "test:audit:invariants": "npm run build && playwright test --project=audit-invariants",

@@ -88,6 +88,13 @@ Phases are **gates, not schedules** (`hq/docs/decisions/PDR-007-ui-audit-strateg
 
 Governing-section references resolve to `hq/docs/decisions/PDR-007-ui-audit-strategy.md` and `hq/docs/website/audit-tooling-design.md` in the sibling HQ repo. Component scripts and specs land with their owning phase; until a component ships, the surface path above is the committed target, not an existing file.
 
+### Audit script family
+
+`package.json` exposes two meta-scripts that wrap the per-component audit scripts (design reference: `hq/docs/website/audit-tooling-design.md` § 6 Item 10; governing issue: [#126](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/126)):
+
+- `npm run test:audit` — runs the audit components serially and exits non-zero on the first failure. As of Phase 1, this executes `test:audit:routes`, `test:audit:widths`, and `test:audit:invariants`. Phase 2 (QA-10.4, QA-10.5) and Phase 3 (QA-10.6) extend this script in their own phase issues as those components land; it is the canonical entry point for "run every audit component that has shipped."
+- `npm run test:audit:update` — invokes `playwright test tests/audit --update-snapshots` to refresh Playwright-captured baselines for audit projects that have them. Phase 1 audit projects produce no Playwright snapshots (routes updates its `route-clusters.json` baseline via a dedicated `test:audit:routes:update` script with `UPDATE_BASELINE=1`; widths and invariants have no baselines), so this is effectively a no-op today. It is wired in now so Phase 2 (QA-10.4 style-sidecar regeneration) and Phase 3 (QA-10.6 rendering-mode PNGs) can extend it without re-architecting the script family.
+
 ### Threshold allowlist (QA-10.2)
 
 Per `hq/docs/decisions/PDR-007-ui-audit-strategy.md` § Constraint 5, QA-10.2's self-generating width list is paired with a reviewer-maintained allowlist at `tests/audit/threshold-significance.json`. Entries carry `threshold_px`, `reason`, `source_file`, `added`, and `review_by` (90-day cadence); expired entries fail the audit. Schema, lifecycle rules, and review cadence are tracked in **[#119](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/119)**; design reference at `hq/docs/website/audit-tooling-design.md` § 6 Item 16.
@@ -136,7 +143,7 @@ docker run --rm \
   sh -c "npm ci && npm run test:visual:update"
 ```
 
-The same container will regenerate audit baselines via `npm run test:audit:update` once the audit script family lands (design reference: `hq/docs/website/audit-tooling-design.md` § 6 Item 10). Docker parity for the audit baseline family is tracked in **[#128](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/128)**; when that ticket closes a sibling `tests/audit/README.md` may absorb the QA-10-specific portion of this section.
+The same container regenerates Playwright-captured audit baselines via `npm run test:audit:update` — see § Audit script family above for the current Phase 1 no-op caveat. Docker parity for the audit baseline family is tracked in **[#128](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/128)**; when that ticket closes a sibling `tests/audit/README.md` may absorb the QA-10-specific portion of this section.
 
 This produces byte-identical baselines to what CI will compare against on the next push. Local regeneration on macOS or Windows is not authoritative — per `hq/docs/website/audit-tooling-design.md` § 5 Risk 3, PRs that touch rendering-mode baselines should state in the commit message that they were regenerated in Docker.
 
