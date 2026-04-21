@@ -1,0 +1,36 @@
+{
+  "archetypes": {
+    "home": {
+      "skeleton_hash": "d29359e95ba4c4855ad100ac5311ce3a0d399a12626e946eb9c55b2768dabc67",
+      "canonical_path": "/",
+      "registered": "2026-04-21"
+    },
+    "blog-index": {
+      "skeleton_hash": "b9d088dfde0254e1dccc7dffa7ba856e440c8f9678018525f3270eac04efcad7",
+      "canonical_path": "/blog/",
+      "registered": "2026-04-21"
+    },
+    "blog-post": {
+      "skeleton_hash": "088aec23695bd23b178fe37d3907de1272d88b934e90455aecdcc95287a86d52",
+      "canonical_path": "/blog/sample-post/",
+      "registered": "2026-04-21"
+    },
+    "about": {
+      "skeleton_hash": "822e794ba73d0a5ce32972a864cf0e0509e109b4ce2e83c25754347d32c4ab5f",
+      "canonical_path": "/about/",
+      "registered": "2026-04-21"
+    },
+    "error": {
+      "skeleton_hash": "24ea3a7f269282377959c8922ac75798c535623990e821ea3da7037a7dd0777a",
+      "canonical_path": "/404.html",
+      "registered": "2026-04-21"
+    }
+  },
+  "route_assignments": {
+    "/": "home",
+    "/blog/": "blog-index",
+    "/blog/sample-post/": "blog-post",
+    "/about/": "about",
+    "/404.html": "error"
+  }
+}

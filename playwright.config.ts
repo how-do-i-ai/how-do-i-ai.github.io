@@ -1,18 +1,23 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Unified Playwright configuration for QA-07 / QA-08 / QA-09.
+ * Unified Playwright configuration for QA-07 / QA-08 / QA-09 / QA-10.1.
  *
- * Three test suites share this config and one `astro preview` webServer:
+ * Four test suites share this config and one `astro preview` webServer:
  *   - `tests/visual/**`        — QA-09 visual regression baselines.
  *   - `tests/a11y/axe.spec.ts` — QA-08 axe-core WCAG 2.2 AA (drives its
  *                                own viewports / color-modes in-code).
  *   - `tests/a11y/touch-targets.spec.ts` — QA-07 touch-target audit
  *                                (uses the project's viewport directly).
+ *   - `tests/audit/routes.spec.ts`       — QA-10.1 route clustering via
+ *                                sitemap walk + DOM skeleton hash (per
+ *                                PDR-007 Phase 1; shares the Desktop Chrome
+ *                                device with the visual suite).
  *
- * Visual + axe run in a single chromium project (Desktop Chrome device
- * metrics); touch-targets runs once per mobile viewport because its spec
- * reads the viewport from the project, not from in-spec iteration.
+ * Visual + axe + audit-routes run in chromium projects (Desktop Chrome
+ * device metrics); touch-targets runs once per mobile viewport because
+ * its spec reads the viewport from the project, not from in-spec
+ * iteration.
  *
  * Per `tests/visual/README.md`: snapshotPathTemplate keeps baselines at
  * `tests/visual/__baselines__/` regardless of the new `./tests` testDir.
@@ -52,6 +57,11 @@ export default defineConfig({
     {
       name: 'chromium',
       testMatch: /(visual\/.*|a11y\/axe)\.spec\.ts$/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'audit-routes',
+      testMatch: /audit\/routes\.spec\.ts$/,
       use: { ...devices['Desktop Chrome'] },
     },
     ...MOBILE_VIEWPORTS.map((v) => ({
