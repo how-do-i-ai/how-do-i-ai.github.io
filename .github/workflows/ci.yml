@@ -47,10 +47,10 @@ jobs:
 
       # Playwright-driven gates: QA-09 visual regression +
       # QA-08 axe-core WCAG 2.2 AA + QA-07 touch-target audit +
-      # QA-10.1 route clustering (PDR-007 Phase 1 audit tooling).
-      # A single `playwright test` invocation covers all four
-      # suites because projects in playwright.config.ts use
-      # testMatch to route specs to the right project(s).
+      # QA-10.1 route clustering + QA-10.3 invariant specs (PDR-007
+      # Phase 1 audit tooling). A single `playwright test` invocation
+      # covers every suite because projects in playwright.config.ts
+      # use testMatch to route specs to the right project(s).
       - name: Get Playwright version
         id: playwright-version
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
@@ -70,7 +70,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: QA-07 / QA-08 / QA-09 / QA-10.1 — Playwright suites
+      - name: QA-07 / QA-08 / QA-09 / QA-10.1 / QA-10.3 — Playwright suites
         run: npx playwright test
 
       - name: Upload Playwright HTML report
