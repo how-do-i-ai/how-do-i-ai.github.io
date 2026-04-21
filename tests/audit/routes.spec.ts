@@ -44,8 +44,11 @@ const REPORT_DIR = join(TESTS_DIR, '__reports__');
 const REPORT_PATH = join(REPORT_DIR, 'routes-report.json');
 
 // UPDATE_BASELINE=1 refreshes committed archetype hashes from the current
-// build. In-flight (never-registered) routes still fail to keep the
-// human-in-the-loop archetype-registration step explicit.
+// build (only for routes that match an archetype's canonical_path — see
+// afterAll). Unregistered routes still fail even in update mode to keep
+// the human-in-the-loop archetype-registration step explicit; hash-only
+// drift within registered routes is absorbed silently, which is the
+// point of running update.
 const UPDATE_BASELINE = process.env.UPDATE_BASELINE === '1';
 
 interface Archetype {
@@ -193,10 +196,36 @@ test.describe('QA-10.1 Route Clustering', () => {
 
   test.afterAll(() => {
     mkdirSync(REPORT_DIR, { recursive: true });
+
+    // Compute the post-update archetype set first so both the written baseline
+    // (in update mode) and the report's `archetypes` field agree. In normal
+    // mode, updatedArchetypes equals baseline.archetypes (no-op copy).
+    // Refresh ONLY from each archetype's canonical_path route: if two routes
+    // share an archetype (which is allowed — route_assignments is a map),
+    // naive iteration would let the last result in order silently bless a
+    // drifted/mismatching route. canonical_path is the single authoritative
+    // source per archetype.
+    const updatedArchetypes: Record<string, Archetype> = {
+      ...baseline.archetypes,
+    };
+    if (UPDATE_BASELINE) {
+      for (const result of results) {
+        const archetypeName = result.registered_archetype;
+        if (!archetypeName) continue;
+        const archetype = updatedArchetypes[archetypeName];
+        if (!archetype) continue;
+        if (result.route !== archetype.canonical_path) continue;
+        updatedArchetypes[archetypeName] = {
+          ...archetype,
+          skeleton_hash: result.actual_hash,
+        };
+      }
+    }
+
     const report = {
       generated_at: new Date().toISOString(),
       update_mode: UPDATE_BASELINE,
-      archetypes: baseline.archetypes,
+      archetypes: updatedArchetypes,
       results,
       unregistered_routes: results
         .filter((r) => r.registered_archetype === null)
@@ -212,23 +241,14 @@ test.describe('QA-10.1 Route Clustering', () => {
     writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
 
     if (UPDATE_BASELINE) {
-      // Refresh committed archetype hashes with the values captured from
-      // this run. Leaves route_assignments alone; new archetypes / routes
-      // remain a deliberate authorship step.
-      const updated: Baseline = {
-        archetypes: { ...baseline.archetypes },
+      const updatedBaseline: Baseline = {
+        archetypes: updatedArchetypes,
         route_assignments: { ...baseline.route_assignments },
       };
-      for (const result of results) {
-        const archetypeName = result.registered_archetype;
-        if (archetypeName && archetypeName in updated.archetypes) {
-          updated.archetypes[archetypeName] = {
-            ...updated.archetypes[archetypeName],
-            skeleton_hash: result.actual_hash,
-          };
-        }
-      }
-      writeFileSync(BASELINE_PATH, `${JSON.stringify(updated, null, 2)}\n`);
+      writeFileSync(
+        BASELINE_PATH,
+        `${JSON.stringify(updatedBaseline, null, 2)}\n`,
+      );
     }
   });
 
@@ -282,6 +302,19 @@ test.describe('QA-10.1 Route Clustering', () => {
       const hash = hashSkeleton(skeleton);
 
       const registeredArchetype = baseline.route_assignments[route] ?? null;
+      // Catch route_assignments that name a non-existent archetype early.
+      // Otherwise the downstream "Skeleton mismatch" error reports
+      // `expected: null` which is hard to diagnose.
+      if (
+        registeredArchetype !== null &&
+        !(registeredArchetype in baseline.archetypes)
+      ) {
+        throw new Error(
+          `Unknown archetype in route_assignments: "${registeredArchetype}" ` +
+            `(route: ${route}). Either add an archetype with that name to ` +
+            `baseline.archetypes, or correct the route_assignments entry.`,
+        );
+      }
       const expectedHash =
         registeredArchetype !== null
           ? (baseline.archetypes[registeredArchetype]?.skeleton_hash ?? null)
@@ -301,13 +334,12 @@ test.describe('QA-10.1 Route Clustering', () => {
         drift_archetype: driftArchetype,
       });
 
-      // Baseline-update mode: skip assertions so the reporter captures every
-      // current hash. New routes still need a manual authorship step to land
-      // in `route_assignments`, which keeps the archetype-registration
-      // decision explicit (see audit-tooling-design § 2.1).
-      if (UPDATE_BASELINE) return;
-
       // Failure mode (a): route has no registered archetype.
+      // Runs BEFORE the UPDATE_BASELINE early-return: baseline regeneration
+      // must never silently absorb a new route — archetype assignment is a
+      // human authorship step (see audit-tooling-design § 2.1). Hash-only
+      // drift on already-registered routes IS absorbed in update mode; that
+      // is what "update" means.
       if (registeredArchetype === null) {
         const lines = [
           `Unregistered route: ${route} (source: ${source})`,
@@ -331,6 +363,11 @@ test.describe('QA-10.1 Route Clustering', () => {
         }
         throw new Error(lines.join('\n'));
       }
+
+      // Baseline-update mode: skip the hash-match assertions so the reporter
+      // captures every current hash and afterAll writes them back into the
+      // baseline. Unregistered-route detection above remains in force.
+      if (UPDATE_BASELINE) return;
 
       // Failure mode (b): registered archetype differs from matching archetype
       // (category drift).
