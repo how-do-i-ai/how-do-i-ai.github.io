@@ -23,6 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Fails fast if tests/visual/DOCKER_IMAGE_TAG (used to regenerate
+      # Playwright-based baselines) has drifted from devDependencies.@playwright/test.
+      # See tests/visual/README.md § Parity enforcement and PR discipline,
+      # PDR-007 § Constraints 1, and audit-tooling-design § 5 Risk 6.
+      - name: Playwright version parity (Docker ↔ npm)
+        run: npm run check:playwright-version-parity
+
       - name: Security audit
         run: npm audit --omit=dev
 

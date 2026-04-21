@@ -4,3 +4,4 @@ dist/
 .claude/
 node_modules/
 package-lock.json
+tests/visual/DOCKER_IMAGE_TAG
