@@ -77,11 +77,11 @@ Four binary gates run on every PR — any failure blocks merge. Thresholds come 
 
 Combined local run: `npm run test:e2e` (QA-07/08/09) + `npm run test:lighthouse` (QA-06). Both expect Chromium to be installed — first run `npx playwright install --with-deps chromium`.
 
-### QA-10 UI audit tooling (PDR-007)
+### QA-10 UI audit tooling (PDR-007) — phased rollout
 
-PDR-007 adopts a second, distinct class of gate — **audit tooling** — that runs alongside the four regression gates above. QA-09 answers "did anything change relative to baseline?" QA-10 answers "is the baseline itself correct?" They coexist.
+PDR-007 adopts a second, distinct class of gate — **audit tooling** — to complement the four regression gates above. QA-09 answers "did anything change relative to baseline?" QA-10 answers "is the baseline itself correct?" They coexist.
 
-QA-10 is phased: six components land across Phase 1 (install-now), Phase 2 (compound value), and Phase 3 (tactical coverage). Surface files split across `tests/audit/` (Playwright specs + runbooks), `scripts/` (pure-Node audits), and `tests/visual/` (Phase 2 style sidecars + Phase 3 rendering-mode baselines colocated with QA-09 PNGs). Full component map, allowlist mechanism, runbook index, and per-phase governance: [`tests/visual/README.md`](./tests/visual/README.md). Source of truth: `hq/docs/decisions/PDR-007-ui-audit-strategy.md` and `hq/docs/website/audit-tooling-design.md` (private HQ repo).
+**QA-10 is planned and rolling out per phase; it is not a CI gate today.** Six components land across Phase 1 (install-now), Phase 2 (compound value), and Phase 3 (tactical coverage). Each component wires into CI as it ships per its tracking issue. Surface files will split across `tests/audit/` (Playwright specs + runbooks; directory will be created by Phase 1 components), `scripts/` (pure-Node audits), and `tests/visual/` (Phase 2 style sidecars + Phase 3 rendering-mode baselines colocated with QA-09 PNGs). Full component map, allowlist mechanism, runbook index, and per-phase governance: [`tests/visual/README.md`](./tests/visual/README.md). Source of truth: `hq/docs/decisions/PDR-007-ui-audit-strategy.md` and `hq/docs/website/audit-tooling-design.md` (private HQ repo).
 
 ## Visual regression and UI audit tooling
 
