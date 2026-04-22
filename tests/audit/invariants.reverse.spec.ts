@@ -17,6 +17,11 @@
  *   - Invariant 7 (per issue #148 AC) — zero max-width on .hero (the
  *     pre-#148 "hero fills viewport while latest sits in 48rem" axis
  *     mismatch at wide viewports).
+ *   - Invariant 9 (per issue #150 AC) — server-side textContent
+ *     divergence across index surfaces. Injected via DOM mutation
+ *     (not CSS) because the predicate asserts textContent, not
+ *     layout — CSS clamp is the documented per-surface visual rule
+ *     and correctly does NOT trip the invariant.
  *
  * Runs in the same `audit-invariants` Playwright project as the primary
  * spec, so detection proofs are exercised on every CI run — they are
@@ -25,6 +30,8 @@
 import { test, expect, type Browser } from '@playwright/test';
 
 import {
+  collectPostSummariesPredicate,
+  correlatePostSummaries,
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
@@ -357,4 +364,140 @@ test('reverse: Invariant 7 detects .hero / .latest-section center-x divergence w
   } finally {
     await close();
   }
+});
+
+/**
+ * Reverse coverage for Invariant 9 — demonstrates that the predicate
+ * detects server-side textContent divergence across index surfaces.
+ *
+ * The forward invariant's failure class is: a post whose summary on `/`
+ * has different textContent from the same post's summary on `/blog/`.
+ * CSS injection cannot reproduce this — `-webkit-line-clamp` hides text
+ * visually but leaves textContent intact, and in fact is the DOCUMENTED
+ * per-surface visual rule the invariant explicitly tolerates. So the
+ * reverse pattern here diverges from Invariants 1 + 6: rather than
+ * inject CSS, we mutate the DOM on one surface post-load to rewrite a
+ * shared `.post-card-summary` textContent to a sentinel string.
+ *
+ * Injection happens only on `/blog/`. The home page's collected entries
+ * are untouched. After both pages are collected, the pure
+ * `correlatePostSummaries` reports the divergence with the specific
+ * postId, the original home text, and the mutated blog-index text.
+ *
+ * Chosen viewport: 320 (the narrowest, matches one of the two forward
+ * viewports; one reverse viewport is sufficient to prove detection).
+ */
+test('reverse: Invariant 9 detects textContent divergence across index surfaces', async ({
+  browser,
+}) => {
+  const width = 320;
+  const SENTINEL = '__INVARIANT9_REVERSE_SENTINEL__';
+
+  // Home — collect untouched.
+  const homeContext = await browser.newContext({
+    viewport: { width, height: 900 },
+    colorScheme: 'light',
+    reducedMotion: 'reduce',
+  });
+  await homeContext.addInitScript(() => {
+    window.localStorage.setItem('theme', 'light');
+  });
+  const homePage = await homeContext.newPage();
+  await homePage.goto('/', { waitUntil: 'networkidle' });
+  const homeEntries = await homePage.evaluate(collectPostSummariesPredicate, {
+    summarySel: SELECTORS.postCardSummary,
+    postIdAttr: SELECTORS.postIdAttr,
+  });
+  await homeContext.close();
+
+  // Blog-index — load, then inject textContent mutation on the FIRST
+  // `.post-card-summary`. Ties the mutation to the first post-id so the
+  // correlation is guaranteed to see a shared id (so the test proves
+  // DIVERGENCE detection, not the zero-shared guard clause).
+  const blogContext = await browser.newContext({
+    viewport: { width, height: 900 },
+    colorScheme: 'light',
+    reducedMotion: 'reduce',
+  });
+  await blogContext.addInitScript(() => {
+    window.localStorage.setItem('theme', 'light');
+  });
+  const blogPage = await blogContext.newPage();
+  await blogPage.goto('/blog/', { waitUntil: 'networkidle' });
+  const mutatedId = await blogPage.evaluate(
+    ({ sentinel, summarySel, postIdAttr }) => {
+      const target = document.querySelector(`[${postIdAttr}] ${summarySel}`);
+      if (!target) return null;
+      const container = target.closest(`[${postIdAttr}]`);
+      const id = container?.getAttribute(postIdAttr) ?? null;
+      target.textContent = sentinel;
+      return id;
+    },
+    {
+      sentinel: SENTINEL,
+      summarySel: SELECTORS.postCardSummary,
+      postIdAttr: SELECTORS.postIdAttr,
+    },
+  );
+
+  expect(
+    mutatedId,
+    'reverse setup requires at least one `.post-card-summary` under a `[data-post-id]` on /blog/',
+  ).not.toBeNull();
+
+  const blogEntries = await blogPage.evaluate(collectPostSummariesPredicate, {
+    summarySel: SELECTORS.postCardSummary,
+    postIdAttr: SELECTORS.postIdAttr,
+  });
+  await blogContext.close();
+
+  const correlation = correlatePostSummaries(homeEntries, blogEntries);
+
+  // The injected mutation is a real divergence — the predicate must detect it.
+  expect(
+    correlation.pass,
+    `Invariant 9 FAILED to detect the injected textContent divergence. Raw correlation: ${JSON.stringify(
+      correlation,
+      null,
+      2,
+    )}`,
+  ).toBe(false);
+
+  // Measurement richness: the correlation must report the divergence
+  // count and the specific per-postId home/blog pair for the mutated
+  // entry, so a CI reviewer can see WHICH post and WHAT the text was
+  // on each side without re-running locally.
+  expect(
+    correlation.divergenceCount,
+    'at least one divergence expected from the injected mutation',
+  ).toBeGreaterThan(0);
+
+  const mutatedDivergence = correlation.divergences.find(
+    (d) => d.postId === mutatedId,
+  );
+  expect(
+    mutatedDivergence,
+    `expected a divergence for the mutated postId=${mutatedId}; got ${JSON.stringify(
+      correlation.divergences,
+    )}`,
+  ).toBeDefined();
+  expect(mutatedDivergence!.blog, 'blog-index text is the sentinel').toBe(
+    SENTINEL,
+  );
+  expect(
+    mutatedDivergence!.home,
+    'home text is the original description (non-sentinel, non-empty)',
+  ).not.toBe(SENTINEL);
+  expect(
+    mutatedDivergence!.home.length,
+    'home text must be non-empty to prove the divergence is across-surface',
+  ).toBeGreaterThan(0);
+
+  // Positive-counterpart check: shared-count must be ≥1 so the
+  // reverse test is exercising the divergence path, not the
+  // zero-shared guard path.
+  expect(
+    correlation.sharedCount,
+    'sharedCount must be ≥1 so the reverse test exercises divergence detection, not the zero-shared guard',
+  ).toBeGreaterThan(0);
 });

@@ -1,12 +1,12 @@
 {
   "archetypes": {
     "home": {
-      "skeleton_hash": "141d6b7fb46f786bded99ef946a626ee50ed905e6564f798490f7c2c551dcf7d",
+      "skeleton_hash": "081ffa35d1f3693c0bc01eb3e60e0f10bd0012261401242c5e104ed1ac3793ac",
       "canonical_path": "/",
       "registered": "2026-04-21"
     },
     "blog-index": {
-      "skeleton_hash": "b9d088dfde0254e1dccc7dffa7ba856e440c8f9678018525f3270eac04efcad7",
+      "skeleton_hash": "94ebc53113a8ce0c332de6a1acf8994ac443750422f09f14f84814f083d8117e",
       "canonical_path": "/blog/",
       "registered": "2026-04-21"
     },

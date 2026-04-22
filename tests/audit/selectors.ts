@@ -21,6 +21,11 @@
  *   - [data-card-content-root] — src/components/PostCardFeatured.astro
  *     (Invariant 6; marks the first element inside the card's internal
  *     padding, which equals the card's content-edge origin)
+ *   - .post-card-summary + [data-post-id] — src/components/PostCard.astro
+ *     and src/components/PostCardFeatured.astro (Invariant 9; marks the
+ *     summary element and its owning post so cross-surface text identity
+ *     can be asserted without coupling to the surface-specific class
+ *     names .post-card-description / .post-card-featured-description)
  */
 
 export const SELECTORS = {
@@ -41,6 +46,12 @@ export const SELECTORS = {
   // added for Invariant 7 — issue #148. The hero section's bounding rect
   // is the reference for cross-block horizontal-alignment consistency.
   heroSection: '.hero',
+  // added for Invariant 9 — issue #150 (post-card summary cross-surface
+  // text identity). The surface-agnostic .post-card-summary class is
+  // additive to the existing surface-specific classes so neither
+  // QA-09 baselines nor existing CSS need to change.
+  postCardSummary: '.post-card-summary',
+  postIdAttr: 'data-post-id',
 } as const;
 
 export type SelectorKey = keyof typeof SELECTORS;
