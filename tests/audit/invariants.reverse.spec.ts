@@ -22,6 +22,8 @@
  *     (not CSS) because the predicate asserts textContent, not
  *     layout — CSS clamp is the documented per-surface visual rule
  *     and correctly does NOT trip the invariant.
+ *   - Invariant 11 (per issue #152 AC) — greedy wrap on
+ *     .hero-descriptor at 320px (the pre-fix "do?" widow pattern).
  *
  * Runs in the same `audit-invariants` Playwright project as the primary
  * spec, so detection proofs are exercised on every CI run — they are
@@ -35,6 +37,7 @@ import {
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
+  invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
 
@@ -500,4 +503,132 @@ test('reverse: Invariant 9 detects textContent divergence across index surfaces'
     correlation.sharedCount,
     'sharedCount must be ≥1 so the reverse test exercises divergence detection, not the zero-shared guard',
   ).toBeGreaterThan(0);
+});
+
+/**
+ * Reverse coverage for Invariant 11 — demonstrates that the predicate
+ * detects the pre-fix "do?" widow from issue #152.
+ *
+ * Pre-fix pattern: .hero-descriptor had no `text-wrap` override, so
+ * the browser's natural greedy wrap at 320px produced
+ * "What works? When to use? How to" / "do?" — a 3-character widow
+ * distinct from the PDR-004 accent-orphan class. Invariant 3 passed
+ * (because "do" is non-accent text on the last line), but the
+ * visual rhythm was broken.
+ *
+ * Mechanism: reproduce the widow via a DOM-level `<br>` between
+ * "How to" and "do" rather than replaying the natural greedy wrap at
+ * 320px. A CSS-only `text-wrap: auto !important` override is not
+ * OS-robust — Linux Chromium renders Inter 600 16px marginally
+ * narrower than macOS, so "What works? When to use? How to do?" fits
+ * on a single line at 320px on Linux (no wrap → no widow to detect)
+ * while macOS wraps at the pre-fix break point (CI run 24781613357).
+ * An explicit `<br>` reproduces the exact visual pattern
+ * deterministically on both OSes without depending on font-metric
+ * replay. The `text-wrap: auto` declaration is retained to document
+ * the greedy-wrap semantic the widow represents; the `<br>` is
+ * respected by both `balance` and `auto` algorithms so the CSS is
+ * documentation, not load-bearing. The DOM-mutation pattern matches
+ * the Invariant 9 reverse test above, which also selected DOM
+ * mutation where CSS alone could not reliably reproduce the failure
+ * class. Rich measurements (line count, last-line text, per-line
+ * breakdown) are asserted below.
+ *
+ * 320px viewport: the narrowest scope viewport from the issue AC
+ * (320, 360, 375, 414). The widow only fires at 320 under greedy
+ * wrap; wider viewports fit the full sentence in fewer, longer lines
+ * so the reverse-test at 320 is the unambiguous detection case.
+ */
+test('reverse: Invariant 11 detects the .hero-descriptor short-widow with rich measurements', async ({
+  browser,
+}) => {
+  // text-wrap: auto documents the pre-fix greedy-wrap intent; the
+  // widow itself is introduced by the <br> DOM mutation below. The
+  // !important keeps the cascade override semantic even though the
+  // <br> wraps regardless of the text-wrap algorithm.
+  const breakingCss = `
+    .hero-descriptor {
+      text-wrap: auto !important;
+    }
+  `;
+  const { page, close } = await openHomeWithInjection(
+    browser,
+    breakingCss,
+    320,
+  );
+
+  try {
+    // Rewrite .hero-descriptor inner HTML to insert a <br> between
+    // "How to" and "do", placing "do?" alone on the last visual line
+    // — the exact pre-fix #152 widow pattern. Preserves the original
+    // span-wrapped accent "?" structure so the rendered text matches
+    // the pre-fix scenario, only with a deterministic break point.
+    // TreeWalker(SHOW_TEXT) skips the <br> element (not a text node)
+    // so the predicate sees the same text-node sequence as the
+    // natural-wrap case.
+    await page.evaluate(() => {
+      const el = document.querySelector('.hero-descriptor');
+      if (!el) {
+        throw new Error(
+          'reverse setup: .hero-descriptor not found for DOM mutation',
+        );
+      }
+      el.innerHTML =
+        'What works<span class="accent">?</span> ' +
+        'When to use<span class="accent">?</span> ' +
+        'How to<br>do<span class="accent">?</span>';
+    });
+
+    const measurement = await page.evaluate(invariant11Predicate, {
+      selector: SELECTORS.heroDescriptor,
+      tolerancePx: 1,
+      minChars: 6,
+    });
+
+    expect(
+      measurement.pass,
+      `Invariant 11 FAILED to detect the injected short-widow. Raw measurement: ${JSON.stringify(
+        measurement,
+        null,
+        2,
+      )}`,
+    ).toBe(false);
+
+    if ('error' in measurement) {
+      throw new Error(
+        `predicate short-circuited before scanning: ${measurement.error}`,
+      );
+    }
+
+    // Measurement richness: the detection must expose the actual short
+    // line length, the lines breakdown (so a CI reviewer sees what
+    // wrapped where without re-running), and the threshold that fired.
+    expect(measurement.minChars, 'minChars must be reported').toBe(6);
+    expect(
+      measurement.lastLineLength,
+      'lastLineLength must be reported',
+    ).toBeLessThan(6);
+    expect(
+      typeof measurement.lastLineText,
+      'lastLineText must be a string',
+    ).toBe('string');
+    expect(
+      measurement.lastLineText.length,
+      'lastLineText.length must equal lastLineLength',
+    ).toBe(measurement.lastLineLength);
+    expect(
+      measurement.lineCount,
+      'lineCount must be reported and >= 2 (widow implies wrap)',
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      Array.isArray(measurement.lines),
+      'per-line breakdown must be an array',
+    ).toBe(true);
+    expect(
+      measurement.lines.length,
+      'per-line breakdown must match lineCount',
+    ).toBe(measurement.lineCount);
+  } finally {
+    await close();
+  }
 });

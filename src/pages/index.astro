@@ -129,6 +129,16 @@ const hasPosts = posts.length > 0;
     font-weight: 600;
     color: var(--color-text);
     margin-block: 0;
+    /*
+      text-wrap: balance prevents the 3-character "do?" widow observed at
+      320px per issue #152. The natural greedy wrap produced
+      "What works? When to use? How to" / "do?" — a short-widow class
+      distinct from the PDR-004 accent-orphan pattern Invariant 3 guards
+      on .hero-tagline ("do" is non-accent, so Invariant 3 does not fire
+      here). Invariant 11 gates the outcome (≥6 chars on the last visual
+      line at 320/360/375/414). Browser baseline: see .hero-tagline above.
+    */
+    text-wrap: balance;
   }
 
   /* Section headings */

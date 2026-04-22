@@ -17,6 +17,7 @@
  *   - .site-nav, .wordmark, .wordmark-text, .pillar-links, .pillar-link,
  *     .nav-actions — src/components/Nav.astro
  *   - .hero + .hero-tagline + .hero-tagline .accent — src/pages/index.astro
+ *   - .hero-descriptor — src/pages/index.astro (Invariant 11)
  *   - .latest-section + [data-eyebrow] — src/pages/index.astro (Invariant 6)
  *   - [data-card-content-root] — src/components/PostCardFeatured.astro
  *     (Invariant 6; marks the first element inside the card's internal
@@ -52,6 +53,12 @@ export const SELECTORS = {
   // QA-09 baselines nor existing CSS need to change.
   postCardSummary: '.post-card-summary',
   postIdAttr: 'data-post-id',
+  // added for Invariant 11 — issue #152 (non-accent short-widow class).
+  // The .hero-descriptor is the hero's meta line ("What works? When to
+  // use? How to do?") — the issue body refers to it conceptually as the
+  // "hero meta line" and uses `.hero-meta` as a placeholder; the actual
+  // class in src/pages/index.astro is .hero-descriptor.
+  heroDescriptor: '.hero-descriptor',
 } as const;
 
 export type SelectorKey = keyof typeof SELECTORS;
