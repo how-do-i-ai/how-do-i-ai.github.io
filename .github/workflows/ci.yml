@@ -131,10 +131,12 @@ jobs:
       # CI-time revisit thresholds in PDR-007. No Phase 1 component
       # uses path-filtering today.
       #
-      # Phase 2 extends this block with QA-10.5 (OG + RSS audit)
-      # as it ships; QA-10.4 (DOM cross-sections) is baked into the
-      # QA-09 Playwright suite and does not add a step here. Phase 3
-      # (QA-10.6) extends this block in its own tracking issue.
+      # QA-10.4 (Phase 2, #132) is intentionally NOT in this block —
+      # it attaches JSON sidecars to each QA-09 PNG inside the existing
+      # `QA-07 / QA-08 / QA-09 — Playwright suites` step above, so it
+      # ships without a new CI step. QA-10.5 (Phase 2, #133) adds its
+      # own step below. Phase 3 QA-10.6 extends this block in its own
+      # tracking issue (#134).
       # --------------------------------------------------------------
 
       - name: QA-10.1 — Route clustering
