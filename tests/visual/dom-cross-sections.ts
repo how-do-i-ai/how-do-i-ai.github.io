@@ -31,6 +31,19 @@ import { SELECTORS } from '../audit/selectors';
 /**
  * MVP captured-property set. Ordered for sidecar stability — the serializer
  * walks this array so the on-disk JSON keys follow a fixed sequence.
+ *
+ * Known limitation — `border`: Chromium's `getComputedStyle(el).border`
+ * shorthand returns `""` when the per-side longhands diverge (e.g. only
+ * `border-bottom` is set on the element). ~8.5% of the Phase 2 baselines
+ * (roughly: `.site-nav`, `.site-footer` containers) show `"border": ""`
+ * for this reason. Drift in those specific elements' border state can go
+ * undetected by the shorthand alone. The MVP set deliberately follows
+ * the issue #132 AC literal list rather than capturing longhands; if
+ * border drift detection becomes a gap in practice, a follow-up issue
+ * should expand capture with `borderTopWidth`/`borderTopStyle`/
+ * `borderTopColor` (and the other three sides) or `borderWidth`/
+ * `borderStyle`/`borderColor`. Keeping the shorthand today preserves
+ * the AC literal contract and the sidecar byte-stability it implies.
  */
 export const CAPTURED_PROPERTIES = [
   'color',
