@@ -59,6 +59,14 @@ export const SELECTORS = {
   // "hero meta line" and uses `.hero-meta` as a placeholder; the actual
   // class in src/pages/index.astro is .hero-descriptor.
   heroDescriptor: '.hero-descriptor',
+  // added for Invariant 8 — issue #149. The footer stacked-layout rule
+  // (max-width: 639px) places the tagline and the About link on
+  // consecutive rows; the invariant asserts their bounding rects share a
+  // left coordinate. Scoped under `.site-footer` so the selectors cannot
+  // collide with a future nav element reusing the same class names.
+  siteFooter: '.site-footer',
+  footerTagline: '.site-footer .tagline',
+  footerAboutLink: '.site-footer .footer-link',
 } as const;
 
 export type SelectorKey = keyof typeof SELECTORS;

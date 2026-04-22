@@ -17,6 +17,10 @@
  *   - Invariant 7 (per issue #148 AC) — zero max-width on .hero (the
  *     pre-#148 "hero fills viewport while latest sits in 48rem" axis
  *     mismatch at wide viewports).
+ *   - Invariant 8 (per issue #149 AC) — footer About link element rect
+ *     shifted right of the tagline in the stacked layout. Injected via
+ *     DOM-mutated inline style (matches the OS-robust convention
+ *     established by Invariants 9 + 11 reverse tests).
  *   - Invariant 9 (per issue #150 AC) — server-side textContent
  *     divergence across index surfaces. Injected via DOM mutation
  *     (not CSS) because the predicate asserts textContent, not
@@ -37,6 +41,7 @@ import {
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
+  invariant8Predicate,
   invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
@@ -366,6 +371,136 @@ test('reverse: Invariant 7 detects .hero / .latest-section center-x divergence w
     ).toBeGreaterThan(measurement.latestCenterX);
   } finally {
     await close();
+  }
+});
+
+/**
+ * Reverse coverage for Invariant 8 — demonstrates that the predicate
+ * detects footer About link element-rect shift in the stacked layout.
+ *
+ * Pre-fix shape for issue #149's forward-compat guard: the About link's
+ * bounding rect left is shifted right of the tagline's (e.g., by a
+ * future refactor adding margin-inline-start, or swapping the flex
+ * context so the link no longer tracks flex-start). The FIX itself
+ * changes `justify-content` only — which does NOT affect element rects
+ * — so the forward invariant passes both before AND after the fix in
+ * the current code. See helpers.ts § invariant8Predicate for the scope
+ * note. Element-rect shift is nevertheless a real regression class
+ * worth a standing guard.
+ *
+ * Mechanism: DOM mutation via inline style (`margin-inline-start:
+ * 24px`) on the `.footer-link`. Matches the OS-robust convention of
+ * Invariants 9 + 11 reverse tests — a CSS `addStyleTag` injection
+ * would equally work for an element-rect shift (no font-metric
+ * replay), but the DOM-mutation pattern is more direct for
+ * geometry-only perturbations and harmonizes with the rest of the
+ * suite. The 24px shift is chosen well above the 1px tolerance so the
+ * assertion is unambiguous, and comfortably below any viewport width
+ * so the link does not hit the right edge.
+ *
+ * 320px viewport: the narrowest of the stacked-layout scope viewports
+ * (320, 375, 414, 480, 600) — chosen so the reverse test is
+ * unambiguously in the stacked-layout regime. One reverse viewport is
+ * sufficient to prove detection; running all five would add no failure
+ * class.
+ */
+test('reverse: Invariant 8 detects footer About link element shift with rich measurements', async ({
+  browser,
+}) => {
+  const width = 320;
+
+  const context = await browser.newContext({
+    viewport: { width, height: 900 },
+    colorScheme: 'light',
+    reducedMotion: 'reduce',
+  });
+  await context.addInitScript(() => {
+    window.localStorage.setItem('theme', 'light');
+  });
+  const page = await context.newPage();
+  await page.goto('/', { waitUntil: 'networkidle' });
+
+  try {
+    // DOM mutation: shift the `.footer-link` element rect right of the
+    // tagline's element rect via an inline `margin-inline-start` style.
+    // inline style wins the cascade without needing `!important`; no
+    // font-metric replay is involved, so the shift is OS-deterministic.
+    const appliedShift = await page.evaluate(() => {
+      const link = document.querySelector<HTMLElement>(
+        '.site-footer .footer-link',
+      );
+      if (!link) return null;
+      link.style.marginInlineStart = '24px';
+      return 24;
+    });
+
+    expect(
+      appliedShift,
+      'reverse setup requires a `.site-footer .footer-link` in the DOM at 320',
+    ).toBe(24);
+
+    const measurement = await page.evaluate(invariant8Predicate, {
+      footerSel: SELECTORS.siteFooter,
+      taglineSel: SELECTORS.footerTagline,
+      aboutLinkSel: SELECTORS.footerAboutLink,
+      tolerancePx: 1,
+    });
+
+    expect(
+      measurement.pass,
+      `Invariant 8 FAILED to detect the injected element-rect shift. Raw measurement: ${JSON.stringify(
+        measurement,
+        null,
+        2,
+      )}`,
+    ).toBe(false);
+
+    if ('error' in measurement) {
+      throw new Error(
+        `predicate short-circuited before measuring: ${measurement.error}`,
+      );
+    }
+
+    // Measurement richness: both absolute positions and the derived
+    // delta must be reported so a CI reviewer can see WHY the gate
+    // fired without re-running the spec locally.
+    expect(typeof measurement.taglineLeft, 'taglineLeft reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.aboutLinkLeft, 'aboutLinkLeft reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.delta, 'delta reported').toBe('number');
+
+    // The injected 24px shift is well above the 1px tolerance. Assert a
+    // lower bound that is comfortably above the tolerance (so the test
+    // is robust against small font-metric drift in the tagline's left
+    // rect) but well below the injected magnitude (so the test is
+    // robust against token drift that might change surrounding
+    // spacing).
+    expect(
+      measurement.delta,
+      'delta should be well above the 1px tolerance for this named regression class',
+    ).toBeGreaterThan(10);
+
+    // The specific geometric pattern for #149: the About link rect
+    // sits strictly RIGHT of the tagline rect (margin-inline-start
+    // shift). If the direction were inverted (link rect left of
+    // tagline), that would be a different regression class and a
+    // different fix — so asserting the direction is part of the
+    // detection's specificity.
+    expect(
+      measurement.aboutLinkLeft,
+      `About link rect must sit right of tagline rect in this regression class (taglineLeft=${measurement.taglineLeft}, aboutLinkLeft=${measurement.aboutLinkLeft})`,
+    ).toBeGreaterThan(measurement.taglineLeft);
+
+    // Tolerance reported alongside so the measurement blob is
+    // self-contained for post-hoc inspection.
+    expect(measurement.tolerancePx, 'tolerancePx echoed in measurement').toBe(
+      1,
+    );
+  } finally {
+    await context.close();
   }
 });
 

@@ -208,11 +208,25 @@ const currentYear = new Date().getUTCFullYear();
     flex-shrink: 0;
   }
 
-  /* Mobile: stacked full-width sections at <640px per PDR-006 § Per-page / ux-architecture § Mobile § Footer. */
+  /* Mobile: stacked full-width sections at <640px per PDR-006 § Per-page / ux-architecture § Mobile § Footer.
+     Per issue #149, the stacked layout places the tagline and the About link
+     on consecutive rows at the same left edge (viewport-left gutter). The
+     base `.footer-link` rule centers its text within the min-width touch
+     target (WCAG 2.5.5 / REQ-MOB-03 — min-width stays unconditional), which
+     reads as an ~8px rightward text drift when the link is the sole item in
+     a stretched column. Overriding `justify-content` to flex-start in the
+     stacked layout keeps the touch target width while aligning the rendered
+     "About" text with the tagline's first character. Invariant 8
+     (tests/audit/invariants.spec.ts) gates the element-rect alignment as a
+     forward-compat guard; QA-09 baselines gate the rendered pixel shift. */
   @media (max-width: 639px) {
     .footer-inner {
       flex-direction: column;
       align-items: stretch;
+    }
+
+    .footer-link {
+      justify-content: flex-start;
     }
   }
 </style>

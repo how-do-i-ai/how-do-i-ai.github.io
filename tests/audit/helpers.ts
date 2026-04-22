@@ -299,6 +299,80 @@ export const invariant7Predicate = ({
   };
 };
 
+export type Invariant8Measurement =
+  | { pass: false; error: string }
+  | {
+      pass: boolean;
+      taglineLeft: number;
+      aboutLinkLeft: number;
+      delta: number;
+      tolerancePx: number;
+    };
+
+/**
+ * Invariant 8 predicate — footer stacked-layout column alignment.
+ *
+ * Issue #149. The stacked footer layout (≤600px viewport) places the
+ * tagline `<p>` and the About link on consecutive rows at the left edge
+ * of the footer's content column. The design intent is that the two
+ * elements share a left coordinate; a drift of the link box to the right
+ * of the tagline (e.g., a future refactor that adds margin-inline-start
+ * to the link) would visibly break that shared-column rhythm.
+ *
+ * Predicate: |taglineRect.left - aboutLinkRect.left| ≤ tolerancePx.
+ *
+ * Scope note: the base `.footer-link` rule uses `justify-content: center`
+ * to center text within the min-width touch target. At ≤639px the
+ * stacked-layout override in Footer.astro switches it to `flex-start` so
+ * the rendered "About" text aligns with the tagline's first character
+ * (the user-visible drift reported in #149). Element bounding rects are
+ * unaffected by `justify-content` — both tagline and link share left=24
+ * before and after the fix — so this invariant is a FORWARD-COMPAT guard
+ * against a future element-shift regression class, not a detection of
+ * the rendered-text drift. The rendered-text shift is gated by QA-09
+ * pixel baselines (regenerated as part of the #149 PR).
+ *
+ * tolerancePx absorbs sub-pixel font-metric drift between macOS and
+ * Linux Chromium (see tests/visual/README.md § "Baselines must be
+ * Linux-generated"). 1px is the AC-specified tolerance in issue #149.
+ */
+export const invariant8Predicate = ({
+  footerSel,
+  taglineSel,
+  aboutLinkSel,
+  tolerancePx,
+}: {
+  footerSel: string;
+  taglineSel: string;
+  aboutLinkSel: string;
+  tolerancePx: number;
+}): Invariant8Measurement => {
+  const footer = document.querySelector(footerSel);
+  if (!footer) return { pass: false, error: `footer not found: ${footerSel}` };
+  const tagline = document.querySelector(taglineSel);
+  if (!tagline)
+    return {
+      pass: false,
+      error: `tagline not found under footer: ${taglineSel}`,
+    };
+  const link = document.querySelector(aboutLinkSel);
+  if (!link)
+    return {
+      pass: false,
+      error: `about link not found under footer: ${aboutLinkSel}`,
+    };
+  const tRect = tagline.getBoundingClientRect();
+  const lRect = link.getBoundingClientRect();
+  const delta = Math.abs(tRect.left - lRect.left);
+  return {
+    pass: delta <= tolerancePx,
+    taglineLeft: tRect.left,
+    aboutLinkLeft: lRect.left,
+    delta,
+    tolerancePx,
+  };
+};
+
 export type PostSummaryEntry = {
   postId: string;
   text: string;
