@@ -64,28 +64,49 @@ const currentYear = new Date().getUTCFullYear();
     <nav class="channels" aria-label="Channels">
       <ul class="channel-list" role="list">
         {
-          channels.map((c) => (
-            <li>
-              <a
-                href={c.href}
-                class="channel-link"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${c.name} (opens in new tab)`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
+          channels.map((c, i) => (
+            <>
+              {/*
+                Widow-prevention spacer per issue #151. The 9-icon channel
+                list has an odd count; natural flex-wrap lands RSS (the
+                final social item) alone on the last row at specific
+                viewports — the F5 UI-review finding. A full-width spacer
+                `<li>` placed AFTER channels[0..N-2] and BEFORE the last
+                social channel (X) + RSS forces X + RSS to share the last
+                row whenever the spacer is active. `channels.length - 1`
+                is the index of the last array entry (X); rendering the
+                spacer just before it places the break between item 7
+                (Facebook) and item 8 (X) in DOM order. Spacer is
+                INACTIVE by default (`display: none`) and ACTIVE only at
+                the media-query ranges in the `<style>` block below.
+                Invariant 10 (tests/audit/invariants.spec.ts) gates the
+                final-row ≥ 2 assertion at every canonical width.
+              */}
+              {i === channels.length - 1 && (
+                <li class="wrap-spacer" aria-hidden="true"></li>
+              )}
+              <li>
+                <a
+                  href={c.href}
+                  class="channel-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${c.name} (opens in new tab)`}
                 >
-                  <path d={c.path} />
-                </svg>
-                <span>{c.name}</span>
-              </a>
-            </li>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d={c.path} />
+                  </svg>
+                  <span>{c.name}</span>
+                </a>
+              </li>
+            </>
           ))
         }
         <li>
@@ -206,6 +227,45 @@ const currentYear = new Date().getUTCFullYear();
 
   .channel-link svg {
     flex-shrink: 0;
+  }
+
+  /* Widow-prevention spacer per issue #151. Default: NOT a flex item.
+     At widths where natural flex-wrap produces a single-icon last row,
+     activate the spacer with `flex-basis: 100%` + zero-height geometry
+     to force an artificial wrap point BEFORE RSS, keeping X + RSS
+     together on the final row. `flex-shrink: 0` is belt-and-suspenders
+     against any future container shrink configuration; the `width:
+     100%` mirrors `flex-basis: 100%` to cover both flex-layout paths
+     (modern browsers honor either alone). `margin` and `padding` are
+     zeroed so the spacer adds no intrinsic vertical height — only the
+     flex `row-gap` on either side contributes vertical space, which at
+     `var(--space-1)` (4px) is small and deliberate coverage for
+     baseline regen. Active ranges match the media query below. */
+  .wrap-spacer {
+    display: none;
+  }
+
+  /* Narrow mobile (≤374px): natural wrap at 320 is 2+3+3+1 with RSS
+     widowed on row 4. Activate spacer → redistributes to 2+3+2+2.
+     Mid-tablet (767-845px): natural wrap is 8+1 in the upper part of
+     the band; the exact widow start drifts by ~1px between macOS and
+     Linux Chromium font rasterization (macOS widows at 767, Linux at
+     768), so the lower bound is 767 to cover both OSes deterministically.
+     Activate spacer → deterministic 7+2. The 845 upper bound sits
+     below the viewport where all 9 icons fit single-row naturally
+     (≈848-900 on Linux); above 845 the spacer is not needed and is
+     inactive. */
+  @media (max-width: 374px),
+    (min-width: 767px) and (max-width: 845px) {
+    .wrap-spacer {
+      display: block;
+      flex-basis: 100%;
+      flex-shrink: 0;
+      width: 100%;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
   }
 
   /* Mobile: stacked full-width sections at <640px per PDR-006 § Per-page / ux-architecture § Mobile § Footer.

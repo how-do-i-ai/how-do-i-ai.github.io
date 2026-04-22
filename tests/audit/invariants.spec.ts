@@ -32,6 +32,7 @@ import {
   invariant6Predicate,
   invariant7Predicate,
   invariant8Predicate,
+  invariant10Predicate,
   invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
@@ -881,6 +882,98 @@ test('Invariant 9: post-card summary text is identical across index surfaces for
   });
   assertAllRunsPassed(
     'Invariant 9 violated — `.post-card-summary` textContent diverges across index surfaces for at least one shared `[data-post-id]` (issue #150 class):',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 10 — Footer social icon row wrap distribution.
+ *
+ * Issue #151 (PDR-007 audit discovery case; F5 Minor). The footer's
+ * 9-icon channel list (8 social channels + RSS) has an odd count;
+ * natural flex-wrap at specific viewports (≤374 and the mid-tablet
+ * band on Linux around 768-845) lands one icon alone on the final
+ * row. At 320 the layout reads as 2+3+3+1 with RSS widowed; in the
+ * mid-tablet band the layout reads as 8+1 with RSS widowed. Single-
+ * icon widow rows read as oversight, reduce the visual weight of
+ * whichever icon was orphaned, and most notably downgrade RSS — the
+ * brand's primary subscription CTA after the PDR-005 analytics
+ * deferral.
+ *
+ * Design intent (post-#151): when the channel list wraps to multiple
+ * rows, the FINAL row contains ≥ 2 icons. The mechanism is a
+ * zero-height, `flex-basis: 100%` `.wrap-spacer` `<li>` inserted
+ * before the last array entry (X), gated to a targeted media query
+ * range so it only activates where natural wrap would widow (≤374
+ * and 768-845). The spacer forces X + RSS onto a shared row after an
+ * artificial wrap point, guaranteeing the ≥ 2 assertion at widow-
+ * prone viewports while leaving other widths untouched. The spacer
+ * carries no `.channel-link` class and no visible content so it is
+ * naturally excluded from the row grouping.
+ *
+ * Predicate (from issue #151 proposed spec, adapted to the real
+ * class names):
+ *   group `.channel-link` elements by getBoundingClientRect().top
+ *   within a 1px tolerance; if rows.length > 1, rows[last].length ≥ 2.
+ *
+ * Viewports per issue #151 proposed spec: the full canonical width
+ * set — 320, 375, 414, 480, 500, 600, 640, 700, 767, 768, 1024 —
+ * "any width where wrap can occur." The 1440 desktop width is
+ * added for symmetry with the other desktop-covering invariants;
+ * its single-row layout trivially satisfies the predicate. Light-
+ * only: the channel list's wrap geometry is color-scheme-independent
+ * by construction (no per-mode width shift), and light-only coverage
+ * matches the MVP convention established by Invariants 1 + 5 for
+ * layout-only predicates that are not modality-sensitive.
+ *
+ * Reverse coverage: invariants.reverse.spec.ts removes the
+ * `.wrap-spacer` element via DOM mutation at 320, re-exposing the
+ * pre-fix 2+3+3+1 widow, and asserts this predicate detects it with
+ * rich measurements (linkCount, rowCount, lastRowCount, per-row
+ * label breakdown). The DOM-mutation pattern matches the Invariants
+ * 8 + 9 + 11 reverse tests (OS-robust per #156's lesson learned) —
+ * a CSS `addStyleTag` override hiding the spacer would equally
+ * work for this specific fix since the spacer is the only
+ * layout-changing mechanism, but DOM mutation harmonizes with the
+ * rest of the suite and also proves detection of the underlying
+ * widow class independent of the fix mechanism.
+ * ------------------------------------------------------------------------- */
+test('Invariant 10: footer social row wrap has no single-icon widow', async ({
+  browser,
+}) => {
+  const viewports = [
+    320, 375, 414, 480, 500, 600, 640, 700, 767, 768, 1024, 1440,
+  ];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    const { context, page } = await openHome(browser, { width });
+    try {
+      const measurement = await page.evaluate(invariant10Predicate, {
+        selector: SELECTORS.channelLink,
+        tolerancePx: 1,
+        minLastRow: 2,
+      });
+      runs.push({
+        viewport: String(width),
+        mode: 'light',
+        pass: measurement.pass,
+        measurements: measurement,
+      });
+    } finally {
+      await context.close();
+    }
+  }
+
+  results.push({
+    id: 'invariant-10',
+    title:
+      'footer social row wrap has no single-icon widow on final row',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 10 violated — footer channel list wraps with a single-icon widow on the final row (issue #151 F5 class):',
     runs,
   );
 });
