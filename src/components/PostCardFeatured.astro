@@ -29,7 +29,7 @@ const displayDate = formatDate(date);
 const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
 ---
 
-<a href={`/blog/${post.id}/`} class="post-card-featured">
+<a href={`/blog/${post.id}/`} class="post-card-featured" data-post-id={post.id}>
   <div class="post-card-featured-badges" data-card-content-root>
     <PillarBadge pillar={pillar} />
     {series && <SeriesBadge series={series} />}
@@ -37,7 +37,7 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
 
   <h2 class="post-card-featured-title">{title}</h2>
 
-  <p class="post-card-featured-description">{description}</p>
+  <p class="post-card-featured-description post-card-summary">{description}</p>
 
   <div class="post-card-featured-meta">
     <time datetime={date.toISOString()}>{displayDate}</time>
@@ -80,6 +80,15 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
     color: var(--color-text);
   }
 
+  /*
+    No summary clamp — issue #150: the home LATEST surface shows a single
+    featured post card with deliberate prominence (larger typography, full
+    summary visible) so the reader gets the full pitch above the fold.
+    This is the inverse of the blog-index PostCard which clamps to 2 lines
+    for grid-uniform card heights. Per-surface visual divergence is
+    intentional; DOM textContent identity is enforced by QA-10.3
+    Invariant 9 (tests/audit/invariants.spec.ts).
+  */
   .post-card-featured-description {
     font-size: var(--text-lg);
     line-height: var(--leading-normal);

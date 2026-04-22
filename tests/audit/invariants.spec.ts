@@ -26,6 +26,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  collectPostSummariesPredicate,
+  correlatePostSummaries,
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
@@ -73,6 +75,19 @@ async function openHome(
   browser: Browser,
   opts: { width: number; height?: number; mode?: Mode },
 ): Promise<{ context: BrowserContext; page: import('@playwright/test').Page }> {
+  return openPath(browser, '/', opts);
+}
+
+/**
+ * Generalized opener used by Invariant 9 (and any future cross-surface
+ * invariant) which must visit more than just `/`. Same theme-pinning
+ * semantics as `openHome` — identical contract, parameterized path.
+ */
+async function openPath(
+  browser: Browser,
+  path: string,
+  opts: { width: number; height?: number; mode?: Mode },
+): Promise<{ context: BrowserContext; page: import('@playwright/test').Page }> {
   const mode: Mode = opts.mode ?? 'light';
   const height = opts.height ?? 900;
 
@@ -89,7 +104,7 @@ async function openHome(
   }, mode);
 
   const page = await context.newPage();
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.goto(path, { waitUntil: 'networkidle' });
 
   // Sanity check the theme actually applied before we measure.
   if (mode === 'dark') {
@@ -672,6 +687,112 @@ test('Invariant 7: .hero and .latest-section share one horizontal alignment axis
   });
   assertAllRunsPassed(
     'Invariant 7 violated — .hero and .latest-section center-x diverge beyond the 4px tolerance (issue #148 F2 class):',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 9 — Post card summary rendering consistency across index surfaces.
+ *
+ * Issue #150 (second post-MVP addition under § When to add trigger 2 "new
+ * failure class discovered"; see INVARIANTS-RUNBOOK.md). Discovered via
+ * /review-ui on QA-09 baselines (`.tmp/scopes/ui-review-findings.md` § F4):
+ * the same post renders its summary visibly truncated at `.post-card` on
+ * `/blog/` but full-length at `.post-card-featured` on `/`, and QA-09
+ * cannot distinguish intentional content truncation from bug because the
+ * two surfaces render at different DOM nodes.
+ *
+ * Decision captured in PR #150 body (option a): home LATEST uses
+ * PostCardFeatured with no CSS clamp (single featured card, deliberate
+ * prominence); blog-index uses PostCard with `-webkit-line-clamp: 2` for
+ * grid-uniform card heights. Per-surface VISUAL divergence is intentional
+ * and documented in both components. DOM textContent identity, however, is
+ * the load-bearing contract: if a future change accidentally truncates a
+ * post's `description` prop for one surface only (server-side render path
+ * divergence, per-surface length limit, different content source), the
+ * reader would see two different post previews depending on entry point.
+ * This invariant is the runtime guard against that class.
+ *
+ * Predicate:
+ *   - Visit `/` and `/blog/` at viewport W.
+ *   - On each, collect `[data-post-id=X] .post-card-summary` as
+ *     `{postId, text, selector}` entries.
+ *   - Correlate by `postId`: for every id that appears on BOTH surfaces,
+ *     the trimmed textContent must be identical byte-for-byte.
+ *   - At least one shared post-id is required; zero-shared is treated as
+ *     a failure (guards against a "no cards rendered" regression that
+ *     would otherwise make the invariant vacuously true).
+ *
+ * Viewports per issue #150 proposed spec: 320 + 768 — the summary text
+ * content contract is viewport-independent by construction (it asserts
+ * textContent, not layout geometry), but 320 + 768 bracket the narrow
+ * edge-bleed band and the wide single-column band so a viewport-dependent
+ * rendering path regression would surface in either. Light mode only:
+ * textContent is color-scheme-independent; dark-mode coverage would add
+ * no failure class beyond what light already captures (per the MVP
+ * convention established by Invariants 1 + 5).
+ *
+ * Reverse coverage: invariants.reverse.spec.ts injects a DOM mutation on
+ * `/blog/` that rewrites one `.post-card-summary` textContent to a
+ * sentinel string, then asserts the predicate detects the divergence with
+ * rich measurements (postId, before/after texts, selector). The
+ * mutation-injection pattern diverges from the CSS-injection pattern used
+ * by Invariants 1 + 6 because the predicate asserts textContent rather
+ * than computed layout — CSS cannot create a textContent divergence.
+ * ------------------------------------------------------------------------- */
+test('Invariant 9: post-card summary text is identical across index surfaces for shared post-ids', async ({
+  browser,
+}) => {
+  const viewports = [320, 768];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    const { context: homeCtx, page: homePage } = await openPath(browser, '/', {
+      width,
+    });
+    let homeEntries;
+    try {
+      homeEntries = await homePage.evaluate(collectPostSummariesPredicate, {
+        summarySel: SELECTORS.postCardSummary,
+        postIdAttr: SELECTORS.postIdAttr,
+      });
+    } finally {
+      await homeCtx.close();
+    }
+
+    const { context: blogCtx, page: blogPage } = await openPath(
+      browser,
+      '/blog/',
+      { width },
+    );
+    let blogEntries;
+    try {
+      blogEntries = await blogPage.evaluate(collectPostSummariesPredicate, {
+        summarySel: SELECTORS.postCardSummary,
+        postIdAttr: SELECTORS.postIdAttr,
+      });
+    } finally {
+      await blogCtx.close();
+    }
+
+    const correlation = correlatePostSummaries(homeEntries, blogEntries);
+    runs.push({
+      viewport: String(width),
+      mode: 'light',
+      pass: correlation.pass,
+      measurements: correlation,
+    });
+  }
+
+  results.push({
+    id: 'invariant-9',
+    title:
+      'post-card summary textContent is identical across home and blog-index for shared post-ids',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 9 violated — `.post-card-summary` textContent diverges across index surfaces for at least one shared `[data-post-id]` (issue #150 class):',
     runs,
   );
 });

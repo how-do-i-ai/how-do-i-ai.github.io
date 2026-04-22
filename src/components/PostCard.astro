@@ -29,7 +29,7 @@ const displayDate = formatDate(date);
 const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
 ---
 
-<a href={`/blog/${post.id}/`} class="post-card">
+<a href={`/blog/${post.id}/`} class="post-card" data-post-id={post.id}>
   <div class="post-card-badges">
     <PillarBadge pillar={pillar} />
     {series && <SeriesBadge series={series} />}
@@ -37,7 +37,7 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
 
   <h3 class="post-card-title">{title}</h3>
 
-  <p class="post-card-description">{description}</p>
+  <p class="post-card-description post-card-summary">{description}</p>
 
   <div class="post-card-meta">
     <time datetime={date.toISOString()}>{displayDate}</time>
@@ -80,6 +80,18 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
     color: var(--color-text);
   }
 
+  /*
+    Summary clamp — issue #150: the blog-index surface renders many post
+    cards in a grid; a 2-line CSS clamp keeps card heights uniform at
+    every viewport so the grid does not go ragged when post descriptions
+    vary in length. This is a DOCUMENTED per-surface visual rule —
+    textContent is intentionally the full description (identical to the
+    home LATEST surface for the same post), and QA-10.3 Invariant 9
+    guards that DOM text identity while tolerating the visual-only
+    divergence. Home featured card (PostCardFeatured.astro) deliberately
+    has NO clamp because it is the single featured post with prominence,
+    not a grid tile. See tests/audit/invariants.spec.ts § Invariant 9.
+  */
   .post-card-description {
     font-size: var(--text-base);
     line-height: var(--leading-normal);

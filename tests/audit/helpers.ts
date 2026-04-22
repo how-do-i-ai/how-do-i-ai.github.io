@@ -200,3 +200,137 @@ export const invariant7Predicate = ({
     tolerancePx,
   };
 };
+
+export type PostSummaryEntry = {
+  postId: string;
+  text: string;
+  selector: string;
+};
+
+/**
+ * Invariant 9 per-page predicate — collects every `.post-card-summary`
+ * textContent keyed by its owning `[data-post-id]` root.
+ *
+ * Browser-side (runs in page.evaluate). Returns an array rather than a
+ * Map because page.evaluate serializes the return value via structured
+ * clone and Map instances survive but are clumsier in the test-side
+ * correlation than an array is. The array is grouped into a Map
+ * spec-side by `correlatePostSummaries`.
+ *
+ * Duplicate post-ids on the same page (e.g., a post that appears in
+ * both the home LATEST section and the home .recent-grid) are kept as
+ * separate entries so the downstream correlation can detect
+ * within-surface divergence as well as cross-surface divergence. The
+ * selector field names the specific DOM node so a failure message can
+ * cite the exact location.
+ */
+export const collectPostSummariesPredicate = ({
+  summarySel,
+  postIdAttr,
+}: {
+  summarySel: string;
+  postIdAttr: string;
+}): PostSummaryEntry[] => {
+  const entries: PostSummaryEntry[] = [];
+  const containers = Array.from(document.querySelectorAll(`[${postIdAttr}]`));
+  for (const container of containers) {
+    const id = container.getAttribute(postIdAttr);
+    if (!id) continue;
+    const summaries = Array.from(container.querySelectorAll(summarySel));
+    for (const summary of summaries) {
+      entries.push({
+        postId: id,
+        text: (summary.textContent ?? '').trim(),
+        selector: `[${postIdAttr}="${id}"] ${summarySel}`,
+      });
+    }
+  }
+  return entries;
+};
+
+export type PostSummaryCorrelation = {
+  pass: boolean;
+  error?: string;
+  homeCount: number;
+  blogCount: number;
+  sharedCount: number;
+  divergenceCount: number;
+  divergences: Array<{
+    postId: string;
+    home: string;
+    blog: string;
+    homeLen: number;
+    blogLen: number;
+  }>;
+};
+
+/**
+ * Invariant 9 spec-side correlation — pure function.
+ *
+ * Takes the home + blog-index summary arrays produced by
+ * `collectPostSummariesPredicate` and asserts:
+ *   1. At least one post-id appears on BOTH surfaces (otherwise the
+ *      invariant is vacuously true and would mask a "no cards rendered"
+ *      regression — treat zero-shared as a failure with a clear error).
+ *   2. For every post-id that appears on BOTH surfaces, the trimmed
+ *      textContent matches byte-for-byte across surfaces.
+ *
+ * Within-surface duplicates (same post rendered twice on the same page)
+ * are flattened via the first-seen text per post-id on each surface. A
+ * within-surface divergence class is out of scope for Invariant 9 —
+ * it would be a distinct invariant with different failure semantics.
+ *
+ * Pure function (no DOM access) so the forward and reverse specs can
+ * both call it with their own collected arrays. Shape is structured-
+ * clone-safe for Playwright's page.evaluate contract.
+ */
+export function correlatePostSummaries(
+  home: PostSummaryEntry[],
+  blog: PostSummaryEntry[],
+): PostSummaryCorrelation {
+  const firstById = (entries: PostSummaryEntry[]): Map<string, string> => {
+    const out = new Map<string, string>();
+    for (const e of entries) {
+      if (!out.has(e.postId)) out.set(e.postId, e.text);
+    }
+    return out;
+  };
+  const homeById = firstById(home);
+  const blogById = firstById(blog);
+  const sharedIds = Array.from(homeById.keys()).filter((id) =>
+    blogById.has(id),
+  );
+  if (sharedIds.length === 0) {
+    return {
+      pass: false,
+      error:
+        'no post-id appears on both home and blog-index — either rendering failed or no published posts exist; cannot assert cross-surface identity',
+      homeCount: home.length,
+      blogCount: blog.length,
+      sharedCount: 0,
+      divergenceCount: 0,
+      divergences: [],
+    };
+  }
+  const divergences = sharedIds
+    .map((id) => {
+      const h = homeById.get(id) ?? '';
+      const b = blogById.get(id) ?? '';
+      return {
+        postId: id,
+        home: h,
+        blog: b,
+        homeLen: h.length,
+        blogLen: b.length,
+      };
+    })
+    .filter((d) => d.home !== d.blog);
+  return {
+    pass: divergences.length === 0,
+    homeCount: home.length,
+    blogCount: blog.length,
+    sharedCount: sharedIds.length,
+    divergenceCount: divergences.length,
+    divergences,
+  };
+}
