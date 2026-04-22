@@ -604,6 +604,68 @@ describe('auditRss', () => {
     expect(v).toBeDefined();
     expect(v.actual).toBe('not-a-date');
   });
+
+  it('surfaces an unparseable frontmatter date as invalid_pubdate on the source side', () => {
+    // loadPosts coerces frontmatter strings via `new Date(raw)`; an
+    // unparseable string yields an Invalid Date. auditRss surfaces that
+    // as rss_invalid_pubdate rather than silently skipping the check,
+    // so YAML-authoring mistakes don't hide behind a green audit.
+    const posts = new Map([
+      ['sample', mkPost({ date: new Date('not-a-real-date') })],
+    ]);
+    const result = auditRss(RSS_OK, posts);
+    const v = result.violations.find(
+      (x) =>
+        x.kind === 'rss_invalid_pubdate' &&
+        x.field.includes('frontmatter side'),
+    );
+    expect(v).toBeDefined();
+    expect(v.source).toContain('src/content/blog/');
+  });
+
+  it('does not double-report a missing link (skips slug-derived checks)', () => {
+    // Copilot #4: if an item is missing <link>, the required-field
+    // check already emits `rss_missing_field`; the audit must NOT also
+    // emit `rss_unrecognized_link` or `rss_orphan_item` for the same
+    // item (there's no way to pair a linkless item with a post).
+    const xml = RSS_OK.replace(
+      '<link>https://how-do-i.ai/blog/sample/</link>',
+      '',
+    );
+    const posts = new Map([['sample', mkPost()]]);
+    const result = auditRss(xml, posts);
+    const missing = result.violations.find(
+      (x) => x.kind === 'rss_missing_field' && x.field.includes('link'),
+    );
+    const unrecognized = result.violations.find(
+      (x) => x.kind === 'rss_unrecognized_link',
+    );
+    const orphan = result.violations.find((x) => x.kind === 'rss_orphan_item');
+    expect(missing).toBeDefined();
+    expect(unrecognized).toBeUndefined();
+    expect(orphan).toBeUndefined();
+  });
+
+  it('does not double-report a missing title (skips mismatch check)', () => {
+    // Copilot #5: if an item is missing <title>, `rss_missing_field`
+    // already fires; a `rss_title_mismatch` on the same field is
+    // redundant. Same principle for description / pubDate.
+    const xml = RSS_OK.replace(
+      '<title>Sample Title</title>\n      <link>',
+      '<title></title>\n      <link>',
+    );
+    const posts = new Map([['sample', mkPost()]]);
+    const result = auditRss(xml, posts);
+    const missing = result.violations.find(
+      (x) =>
+        x.kind === 'rss_missing_field' && x.field.includes('item[0] > title'),
+    );
+    const mismatch = result.violations.find(
+      (x) => x.kind === 'rss_title_mismatch',
+    );
+    expect(missing).toBeDefined();
+    expect(mismatch).toBeUndefined();
+  });
 });
 
 // --- Reverse-test AC (issue #133) -----------------------------------

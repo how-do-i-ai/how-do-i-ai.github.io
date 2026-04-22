@@ -230,11 +230,18 @@ export function normalizeUrl(urlStr, site = SITE) {
 
 /**
  * Load every blog post under `src/content/blog/*.md` and return a Map
- * keyed by the post's slug (filename basename without extension —
- * matches Astro content-collection `post.id` / `post.slug`). Draft
- * posts are filtered out; they don't ship to `dist/`, so the audit
- * would otherwise flag them as missing artifacts. Returns the Map
- * plus the full list for downstream iteration.
+ * keyed by slug for downstream lookup/iteration. The slug is the
+ * filename basename without extension — matches Astro content-
+ * collection `post.id` / `post.slug`. Draft posts are filtered out;
+ * they don't ship to `dist/`, so the audit would otherwise flag them
+ * as missing artifacts.
+ *
+ * Date coercion: gray-matter parses YAML date literals (`2025-01-15`)
+ * as `Date` instances and quoted strings (`'2025-01-15'`) as strings.
+ * Both shapes reach this loader; we coerce via `new Date(raw)` so the
+ * downstream RSS pubDate check is applied regardless of how the YAML
+ * was authored. `invalid_date` surfaces as a parsed `NaN`-epoch Date,
+ * which `auditRss` then flags explicitly rather than silently skipping.
  */
 export function loadPosts(blogDir = BLOG_SOURCE_DIR) {
   const bySlug = new Map();
@@ -257,11 +264,22 @@ export function loadPosts(blogDir = BLOG_SOURCE_DIR) {
       throw new Error(`${fullPath}: frontmatter parse failed (${err.message})`);
     }
     if (parsed.data.draft === true) continue;
+    const rawDate = parsed.data.date;
+    let date = null;
+    if (rawDate instanceof Date) {
+      date = rawDate;
+    } else if (rawDate !== undefined && rawDate !== null) {
+      // Coerce strings / numbers. An unparseable value yields an
+      // Invalid Date (getTime() === NaN); `auditRss` surfaces that as
+      // `rss_invalid_pubdate` on the frontmatter side rather than
+      // silently skipping the cross-reference.
+      date = new Date(rawDate);
+    }
     bySlug.set(slug, {
       slug,
       title: parsed.data.title,
       description: parsed.data.description,
-      date: parsed.data.date instanceof Date ? parsed.data.date : null,
+      date,
       source_file: relative(REPO_ROOT, fullPath),
     });
   }
@@ -269,9 +287,10 @@ export function loadPosts(blogDir = BLOG_SOURCE_DIR) {
 }
 
 /**
- * Walk `dist/` and collect every `.html` file. Returns paths relative
- * to the repo root so failure messages point at filesystem locations
- * the author can open directly.
+ * Walk `dist/` and collect every `.html` file. Returns absolute
+ * filesystem paths under `dist/`; callers can convert them to
+ * repo-relative paths via `relative(REPO_ROOT, path)` when formatting
+ * failure messages (the main entry point does this for every page).
  */
 export function globDistHtml(distDir = DIST_DIR) {
   const out = [];
@@ -622,9 +641,16 @@ export function auditRss(xmlContent, posts) {
   const seenSlugs = new Set();
   for (const [i, item] of items.entries()) {
     const itemLabel = `item[${i}]`;
+
+    // 1. Required-field presence check per RSS 2.0. Collect the set of
+    //    fields missing on this item so the downstream cross-reference
+    //    checks can skip them — reporting BOTH `rss_missing_field` and
+    //    a `*_mismatch` for the same field would be noise.
+    const missingFields = new Set();
     for (const field of RSS_ITEM_REQUIRED) {
       const value = item[field];
       if (value === undefined || value === null || value === '') {
+        missingFields.add(field);
         violations.push({
           kind: 'rss_missing_field',
           source: 'dist/rss.xml',
@@ -635,17 +661,25 @@ export function auditRss(xmlContent, posts) {
       }
     }
 
-    const link = item.link ?? '';
-    const slug = slugFromBlogUrl(link);
+    // 2. Slug pairing. If link is missing/empty, the required-field
+    //    check above already emitted `rss_missing_field`; skip the
+    //    slug-derived checks (orphan/unrecognized/duplicate) on this
+    //    item — there's no way to pair it with a source post.
+    if (missingFields.has('link')) {
+      continue;
+    }
+
+    const slug = slugFromBlogUrl(String(item.link));
     if (slug === null) {
-      // Non-blog items would be orphan in the current site — the RSS
-      // only emits blog posts. Surface it rather than silently skip.
+      // Link is present but not of the `/blog/<slug>/` shape — the RSS
+      // only emits blog posts today, so surface it rather than silently
+      // skipping.
       violations.push({
         kind: 'rss_unrecognized_link',
         source: 'dist/rss.xml',
         field: `${itemLabel} > link`,
         expected: `/blog/<slug>/ URL`,
-        actual: link,
+        actual: item.link,
       });
       continue;
     }
@@ -673,9 +707,14 @@ export function auditRss(xmlContent, posts) {
       continue;
     }
 
+    // 3. Per-field cross-reference. Each check is gated on the field
+    //    NOT being in missingFields — a missing field already produced
+    //    a `rss_missing_field` violation; a mismatch violation on the
+    //    same field would be redundant.
+
     // Title — exact equality after normalization (no site-name suffix
     // on RSS item titles).
-    if (item.title !== undefined) {
+    if (!missingFields.has('title')) {
       const actual = normalizeText(String(item.title));
       const expected = normalizeText(post.title);
       if (actual !== expected) {
@@ -690,7 +729,7 @@ export function auditRss(xmlContent, posts) {
     }
 
     // Description — exact equality after normalization.
-    if (item.description !== undefined) {
+    if (!missingFields.has('description')) {
       const actual = normalizeText(String(item.description));
       const expected = normalizeText(post.description);
       if (actual !== expected) {
@@ -705,9 +744,11 @@ export function auditRss(xmlContent, posts) {
     }
 
     // pubDate — epoch-ms equality; frontmatter Date ↔ RSS RFC-822.
-    if (item.pubDate !== undefined && post.date !== null) {
+    // Surface invalid dates on either side explicitly (rather than
+    // silently skipping) so timezone/encoding bugs don't hide.
+    if (!missingFields.has('pubDate')) {
       const rssEpoch = new Date(String(item.pubDate)).getTime();
-      const fmEpoch = post.date.getTime();
+      const fmEpoch = post.date ? post.date.getTime() : NaN;
       if (!Number.isFinite(rssEpoch)) {
         violations.push({
           kind: 'rss_invalid_pubdate',
@@ -715,6 +756,14 @@ export function auditRss(xmlContent, posts) {
           field: `${itemLabel} > pubDate`,
           expected: 'RFC-822 date parseable by new Date()',
           actual: item.pubDate,
+        });
+      } else if (!Number.isFinite(fmEpoch)) {
+        violations.push({
+          kind: 'rss_invalid_pubdate',
+          source: post.source_file,
+          field: `${itemLabel} > pubDate (frontmatter side)`,
+          expected: 'valid date in frontmatter `date` field',
+          actual: post.date === null ? 'missing' : `unparseable (${post.date})`,
         });
       } else if (rssEpoch !== fmEpoch) {
         violations.push({
@@ -728,26 +777,24 @@ export function auditRss(xmlContent, posts) {
     }
 
     // Link — resolved-normalized equality.
-    if (item.link !== undefined) {
-      const actualUrl = normalizeUrl(String(item.link));
-      const expectedUrl = normalizeUrl(`/blog/${slug}/`);
-      if (actualUrl === null) {
-        violations.push({
-          kind: 'invalid_url',
-          source: 'dist/rss.xml',
-          field: `${itemLabel} > link`,
-          expected: 'syntactically-valid URL',
-          actual: item.link,
-        });
-      } else if (actualUrl !== expectedUrl) {
-        violations.push({
-          kind: 'rss_link_mismatch',
-          source: 'dist/rss.xml',
-          field: `${itemLabel} > link`,
-          expected: expectedUrl,
-          actual: actualUrl,
-        });
-      }
+    const actualUrl = normalizeUrl(String(item.link));
+    const expectedUrl = normalizeUrl(`/blog/${slug}/`);
+    if (actualUrl === null) {
+      violations.push({
+        kind: 'invalid_url',
+        source: 'dist/rss.xml',
+        field: `${itemLabel} > link`,
+        expected: 'syntactically-valid URL',
+        actual: item.link,
+      });
+    } else if (actualUrl !== expectedUrl) {
+      violations.push({
+        kind: 'rss_link_mismatch',
+        source: 'dist/rss.xml',
+        field: `${itemLabel} > link`,
+        expected: expectedUrl,
+        actual: actualUrl,
+      });
     }
   }
 
