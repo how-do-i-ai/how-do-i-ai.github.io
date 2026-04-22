@@ -92,8 +92,14 @@ Governing-section references resolve to `hq/docs/decisions/PDR-007-ui-audit-stra
 
 `package.json` exposes two meta-scripts that wrap the per-component audit scripts (design reference: `hq/docs/website/audit-tooling-design.md` § 6 Item 10; governing issue: [#126](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/126)):
 
-- `npm run test:audit` — runs the audit components serially and exits non-zero on the first failure. As of Phase 1, this executes `test:audit:routes`, `test:audit:widths`, and `test:audit:invariants`. Phase 2 (QA-10.4, QA-10.5) and Phase 3 (QA-10.6) extend this script in their own phase issues as those components land; it is the canonical entry point for "run every audit component that has shipped."
-- `npm run test:audit:update` — invokes `playwright test tests/audit --update-snapshots` to refresh Playwright-captured baselines for audit projects that have them. Phase 1 audit projects produce no Playwright snapshots (routes updates its `route-clusters.json` baseline via a dedicated `test:audit:routes:update` script with `UPDATE_BASELINE=1`; widths and invariants have no baselines), so this is effectively a no-op today. It is wired in now so Phase 2 (QA-10.4 style-sidecar regeneration) and Phase 3 (QA-10.6 rendering-mode PNGs) can extend it without re-architecting the script family.
+- `npm run test:audit` — runs the audit components serially and exits non-zero on the first failure. As of Phase 1, this executes `test:audit:routes`, `test:audit:widths`, and `test:audit:invariants`. Phase 2 QA-10.5 and Phase 3 (QA-10.6) extend this script in their own phase issues as those components land; it is the canonical entry point for "run every audit component that has shipped." QA-10.4 is intentionally NOT wired into this meta-script — its capture runs inline with `npm run test:visual` (see QA-10.4 note below).
+- `npm run test:audit:update` — invokes `playwright test tests/audit --update-snapshots` to refresh Playwright-captured baselines for audit projects under `tests/audit/`. Phase 1 audit projects produce no Playwright snapshots (routes updates its `route-clusters.json` baseline via a dedicated `test:audit:routes:update` script with `UPDATE_BASELINE=1`; widths and invariants have no baselines), so this is effectively a no-op today. It is wired in now so Phase 3 QA-10.6 (rendering-mode PNGs under `tests/visual/rendering-modes.spec.ts`) can extend it without re-architecting the script family. QA-10.4 sidecars regenerate via `npm run test:visual:update` (see below) since they attach to the QA-09 matrix in `screenshots.spec.ts`, not to a standalone audit spec.
+
+### QA-10.4 sidecars (`screenshots.spec.ts` extension)
+
+QA-10.4 attaches a `.styles.json` sidecar to each QA-09 PNG — same 12×2×3 = 72 matrix, same Playwright invocation, same Docker regen command. Each sidecar records computed styles for the curated selector set defined in [`tests/audit/selectors.ts`](../audit/selectors.ts) (authored by QA-10.3 #121). The captured property set is fixed in [`tests/visual/dom-cross-sections.ts`](./dom-cross-sections.ts) (`color`, `backgroundColor`, `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `padding`, `margin`, `border`, `display`, `position`, `flexDirection`, `gap` — explicitly excludes animation-dependent / state-dependent properties and layout geometry, which QA-09 pixel-diff covers). A reverse spec at [`dom-cross-sections.reverse.spec.ts`](./dom-cross-sections.reverse.spec.ts) proves the diff mechanism catches a single-property shift — required because otherwise the forward diff could silently stop detecting drift (the failure class PDR-007 exists to prevent).
+
+On drift: the test fails with a line-per-property diff naming the selector, element index, property, and from → to values. Intentional shifts regenerate with `npm run test:visual:update` in Docker (same command that regenerates PNGs); the updated sidecars go through PR review alongside the PNG diff.
 
 ### Threshold allowlist (QA-10.2)
 
@@ -131,7 +137,7 @@ Per-component baseline expectations (`hq/docs/website/audit-tooling-design.md` �
 | QA-10.5   | None (source of truth is post frontmatter + RSS 2.0 spec) | N/A                                                                                                                |
 | QA-10.6   | `tests/visual/__baselines__/*-{rendering}.png`            | **Required** — Linux-Chromium fidelity ceiling applies strictly                                                    |
 
-Regenerate with a single Docker invocation for QA-09 today:
+Regenerate QA-09 PNGs together with QA-10.4 style sidecars via a single Docker invocation:
 
 ```bash
 # Run from the repo root. Version tag must match devDependencies.@playwright/test.
@@ -143,7 +149,7 @@ docker run --rm \
   sh -c "npm ci && npm run test:visual:update"
 ```
 
-The same container regenerates Playwright-captured audit baselines via `npm run test:audit:update` — see § Audit script family above for the current Phase 1 no-op caveat. Docker parity for the audit baseline family is tracked in **[#128](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/128)**; when that ticket closes a sibling `tests/audit/README.md` may absorb the QA-10-specific portion of this section.
+`test:visual:update` refreshes both the `.png` baselines and the `.styles.json` sidecars because QA-10.4 extends `screenshots.spec.ts` rather than running as a separate spec — one matrix, two artifact types, one regen. The same container regenerates `tests/audit/`-scoped baselines (today: `route-clusters.json`) via `npm run test:audit:update` (see § Audit script family above for the current Phase 1 no-op caveat). Docker parity for the audit baseline family was established in **[#128](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/128)**.
 
 This produces byte-identical baselines to what CI will compare against on the next push. Local regeneration on macOS or Windows is not authoritative — per `hq/docs/website/audit-tooling-design.md` § 5 Risk 3, PRs that touch rendering-mode baselines should state in the commit message that they were regenerated in Docker.
 
