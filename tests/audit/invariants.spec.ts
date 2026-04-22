@@ -31,6 +31,7 @@ import {
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
+  invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
 
@@ -793,6 +794,81 @@ test('Invariant 9: post-card summary text is identical across index surfaces for
   });
   assertAllRunsPassed(
     'Invariant 9 violated — `.post-card-summary` textContent diverges across index surfaces for at least one shared `[data-post-id]` (issue #150 class):',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 11 — .hero-descriptor (hero meta line) no short widow.
+ *
+ * Issue #152 (PDR-007 audit discovery case). The hero meta line
+ * ("What works? When to use? How to do?") wrapped at 320px as
+ * "What works? When to use? How to" / "do?" under the natural greedy
+ * wrap — a 3-character widow line distinct from the PDR-004
+ * accent-orphan class that Invariant 3 guards on .hero-tagline. The
+ * widow cleared Invariant 3 because "do" is non-accent, but the
+ * visual rhythm was still broken. The fix applies `text-wrap: balance`
+ * on .hero-descriptor (index.astro); this invariant gates the outcome.
+ *
+ * Predicate: character-level line grouping. Walk each text-node
+ * character inside .hero-descriptor, read its rect via a length-1
+ * Range, group by top-coordinate with 1px tolerance (matches
+ * Invariant 3 — absorbs sub-pixel font-metric drift between macOS and
+ * Linux Chromium per `audit-tooling-design.md § QA-10.3 Linux-parity
+ * approach`), and assert the last visual line carries ≥ N characters
+ * (N=6 per issue spec). Character-level rather than child-level
+ * because a single text-node child may span multiple lines — see
+ * helpers.ts § invariant11Predicate for the Invariant 3 vs Invariant 11
+ * unit-of-measurement distinction.
+ *
+ * Viewports: 320, 360, 375, 414 — scope-matched to Invariant 3 (the
+ * mobile band where .hero-descriptor is reachable). Only 320
+ * exercises the wrap path at current font sizing; 360/375/414 fit
+ * on a single line today (expect `lineCount: 1` in the per-run
+ * report — by design, not a silent pass). Running the non-wrapping
+ * viewports anyway is forward-compat defense: if content or token
+ * values shift so .hero-descriptor wraps at 360+, the invariant
+ * gates the new wrap without a viewport-set edit. Light-only;
+ * weight and wrap are color-scheme-independent.
+ *
+ * Reverse coverage: invariants.reverse.spec.ts injects `text-wrap:
+ * auto` (reverting the fix to the pre-fix greedy wrap) at 320px and
+ * asserts this predicate detects the "do?" widow with rich
+ * measurements.
+ * ------------------------------------------------------------------------- */
+test('Invariant 11: .hero-descriptor last visual line has ≥6 characters', async ({
+  browser,
+}) => {
+  const viewports = [320, 360, 375, 414];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    const { context, page } = await openHome(browser, { width });
+    try {
+      const measurement = await page.evaluate(invariant11Predicate, {
+        selector: SELECTORS.heroDescriptor,
+        tolerancePx: 1,
+        minChars: 6,
+      });
+      runs.push({
+        viewport: String(width),
+        mode: 'light',
+        pass: measurement.pass,
+        measurements: measurement,
+      });
+    } finally {
+      await context.close();
+    }
+  }
+
+  results.push({
+    id: 'invariant-11',
+    title: '.hero-descriptor last visual line has ≥6 characters',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 11 violated — .hero-descriptor last visual line is shorter than 6 characters (issue #152 widow class):',
     runs,
   );
 });

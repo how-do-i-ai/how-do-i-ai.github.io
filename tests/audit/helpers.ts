@@ -58,6 +58,104 @@ export const invariant1Predicate = ({
   };
 };
 
+export type Invariant11Measurement =
+  | { pass: false; error: string }
+  | {
+      pass: boolean;
+      minChars: number;
+      lineCount: number;
+      lastLineText: string;
+      lastLineLength: number;
+      lines: Array<{ top: number; text: string }>;
+    };
+
+/**
+ * Invariant 11 predicate — `.hero-descriptor` last-line has ≥ minChars
+ * visible characters.
+ *
+ * Issue #152 reported a 3-character widow "do?" on line 2 at 320px,
+ * produced by the natural greedy wrap. The fix applies `text-wrap:
+ * balance` in index.astro; this predicate gates the outcome.
+ *
+ * Complements Invariant 3 (.hero-tagline accent-orphan). Invariant 3
+ * tests whether the last line contains at least one non-accent
+ * character — binary membership. Invariant 11 tests the COUNT of
+ * characters on the last line — a distinct class the #152 widow
+ * cleared Invariant 3 with ("do" is non-accent) but still visually
+ * orphaned.
+ *
+ * Character-level grouping (why not child-node grouping like Invariant 3):
+ * Invariant 3 asks "is any non-accent child on the last line?" — the
+ * child is the unit of measurement, so child-level rects suffice.
+ * Invariant 11 asks "how long is the last line?" — characters are the
+ * unit, and a single child's textContent may split across lines, so
+ * child-level rects over-count. Walking each character with a length-1
+ * Range yields per-character tops; grouping by top (tolerance absorbs
+ * sub-pixel drift per `audit-tooling-design.md § QA-10.3 Linux-parity
+ * approach`) gives the exact characters visible on each visual line.
+ *
+ * Collapsed rects (zero-width whitespace at line-break positions) are
+ * discarded; the count is of characters that actually render.
+ */
+export const invariant11Predicate = ({
+  selector,
+  tolerancePx,
+  minChars,
+}: {
+  selector: string;
+  tolerancePx: number;
+  minChars: number;
+}): Invariant11Measurement => {
+  const el = document.querySelector(selector);
+  if (!el) return { pass: false, error: `not found: ${selector}` };
+
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const entries: { char: string; top: number }[] = [];
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent ?? '';
+    for (let i = 0; i < text.length; i++) {
+      const range = document.createRange();
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const rects = range.getClientRects();
+      for (const rect of Array.from(rects)) {
+        // Skip collapsed whitespace rects — they carry no visible line
+        // membership (typical at soft-wrap break points).
+        if (rect.width < 0.1 || rect.height < 0.1) continue;
+        entries.push({ char: text[i], top: rect.top });
+      }
+    }
+  }
+
+  if (entries.length === 0) {
+    return { pass: false, error: 'no measurable characters' };
+  }
+
+  // Group by top-coordinate with 1px tolerance (matches Invariant 3).
+  const sorted = [...entries].sort((a, b) => a.top - b.top);
+  const lines: { top: number; chars: string[] }[] = [];
+  for (const entry of sorted) {
+    const existing = lines.find(
+      (l) => Math.abs(l.top - entry.top) <= tolerancePx,
+    );
+    if (existing) existing.chars.push(entry.char);
+    else lines.push({ top: entry.top, chars: [entry.char] });
+  }
+
+  const lastLine = lines[lines.length - 1];
+  const lastLineText = lastLine.chars.join('');
+
+  return {
+    pass: lastLineText.length >= minChars,
+    minChars,
+    lineCount: lines.length,
+    lastLineText,
+    lastLineLength: lastLineText.length,
+    lines: lines.map((l) => ({ top: l.top, text: l.chars.join('') })),
+  };
+};
+
 export type Invariant6Measurement =
   | { pass: false; error: string }
   | {
