@@ -7,6 +7,20 @@
       "source_file": "dist/_astro/about.TrGEe_8_.css",
       "added": "2026-04-21",
       "review_by": "2026-07-20"
+    },
+    {
+      "threshold_px": 374,
+      "reason": "Spacer activation lower-band for footer social-icon widow fix (#151 / QA-10.3 Invariant 10). Below 375 natural wrap is 2+3+3+1 widowing RSS; spacer activates to redistribute to 2+3+2+2. QA-09 baselines 320 (spacer active) and 375 (spacer inactive) cover both states; 374 is the CSS implementation boundary between them, no independent layout state to audit.",
+      "source_file": "src/components/Footer.astro",
+      "added": "2026-04-22",
+      "review_by": "2026-07-21"
+    },
+    {
+      "threshold_px": 845,
+      "reason": "Spacer activation upper-band for footer social-icon widow fix (#151 / QA-10.3 Invariant 10). Compound rule (min-width:767) and (max-width:845) handles mid-tablet widow where exact widow-start drifts ~1px between macOS/Linux Chromium (767 vs 768) — 767 lower bound covers both OSes deterministically. Above 845 all 9 icons fit single-row naturally (~848-900 on Linux). QA-09 baselines 767 and 768 (both spacer-active) cover the activated state; 1024 (spacer-inactive) covers above-band; 845 is a CSS compound-query upper bound with no independent layout state.",
+      "source_file": "src/components/Footer.astro",
+      "added": "2026-04-22",
+      "review_by": "2026-07-21"
     }
   ]
 }
