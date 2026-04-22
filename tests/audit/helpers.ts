@@ -133,3 +133,70 @@ export const invariant6Predicate = ({
     minLeftOk,
   };
 };
+
+export type Invariant7Measurement =
+  | { pass: false; error: string }
+  | {
+      pass: boolean;
+      heroLeft: number;
+      heroWidth: number;
+      heroCenterX: number;
+      latestLeft: number;
+      latestWidth: number;
+      latestCenterX: number;
+      delta: number;
+      tolerancePx: number;
+    };
+
+/**
+ * Invariant 7 predicate — home-page content-block alignment consistency.
+ *
+ * The `.hero` section and the `.latest-section` section share one
+ * horizontal alignment axis: at every desktop viewport the two section
+ * bounding rects have matching center-x (within tolerancePx). Guards
+ * against the "three blocks, three axes" class reported in issue #148
+ * where the hero filled the viewport and the latest section sat in a
+ * 48rem centered container, producing visually-divergent container
+ * widths even though both were mathematically centered.
+ *
+ * Predicate:
+ *   |heroRect.left + heroRect.width/2 - latestRect.left - latestRect.width/2|
+ *     ≤ tolerancePx
+ *
+ * Both bounding rects are read via `getBoundingClientRect()` — CSS-pixel
+ * viewport coordinates. The measurement is a four-number geometric read
+ * + one boolean; no distance-to-pixel conversion, no OS-dependent
+ * rasterization. tolerancePx absorbs sub-pixel drift (4px is the
+ * AC-specified tolerance in issue #148).
+ */
+export const invariant7Predicate = ({
+  heroSel,
+  latestSel,
+  tolerancePx,
+}: {
+  heroSel: string;
+  latestSel: string;
+  tolerancePx: number;
+}): Invariant7Measurement => {
+  const hero = document.querySelector(heroSel);
+  if (!hero) return { pass: false, error: `hero not found: ${heroSel}` };
+  const latest = document.querySelector(latestSel);
+  if (!latest)
+    return { pass: false, error: `latest-section not found: ${latestSel}` };
+  const hRect = hero.getBoundingClientRect();
+  const lRect = latest.getBoundingClientRect();
+  const heroCenterX = hRect.left + hRect.width / 2;
+  const latestCenterX = lRect.left + lRect.width / 2;
+  const delta = Math.abs(heroCenterX - latestCenterX);
+  return {
+    pass: delta <= tolerancePx,
+    heroLeft: hRect.left,
+    heroWidth: hRect.width,
+    heroCenterX,
+    latestLeft: lRect.left,
+    latestWidth: lRect.width,
+    latestCenterX,
+    delta,
+    tolerancePx,
+  };
+};

@@ -16,7 +16,7 @@
  * Each constant is verified against the current component source:
  *   - .site-nav, .wordmark, .wordmark-text, .pillar-links, .pillar-link,
  *     .nav-actions — src/components/Nav.astro
- *   - .hero-tagline + .hero-tagline .accent — src/pages/index.astro
+ *   - .hero + .hero-tagline + .hero-tagline .accent — src/pages/index.astro
  *   - .latest-section + [data-eyebrow] — src/pages/index.astro (Invariant 6)
  *   - [data-card-content-root] — src/components/PostCardFeatured.astro
  *     (Invariant 6; marks the first element inside the card's internal
@@ -38,6 +38,9 @@ export const SELECTORS = {
   latestSection: '.latest-section',
   latestEyebrow: '[data-eyebrow]',
   latestCardContentRoot: '[data-card-content-root]',
+  // added for Invariant 7 — issue #148. The hero section's bounding rect
+  // is the reference for cross-block horizontal-alignment consistency.
+  heroSection: '.hero',
 } as const;
 
 export type SelectorKey = keyof typeof SELECTORS;

@@ -2,7 +2,7 @@
 
 > Source of truth: [PDR-007 § Consequences — baseline maintenance burden](../../../hq/docs/decisions/PDR-007-ui-audit-strategy.md) and [audit-tooling-design.md § 6 Item 14](../../../hq/docs/website/audit-tooling-design.md) (HQ repo, private — see [CONTRIBUTING § Cross-repo setup](../../CONTRIBUTING.md#cross-repo-setup)).
 
-This document codifies how the QA-10.3 invariant set — the Playwright `test()` blocks in [`tests/audit/invariants.spec.ts`](./invariants.spec.ts) — evolves as the site's design evolves intentionally. The MVP set is five home-page assertions ([#121](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/121)); Invariant 6 ([#147](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/147)) was added post-MVP as the first application of the runbook's § When to add trigger 2 ("a new failure class is discovered"). Undisciplined edits to that set defeat QA-10.3's purpose: **invariants are the institutional memory of the design decisions that must not regress**. Every add and every remove passes through this runbook.
+This document codifies how the QA-10.3 invariant set — the Playwright `test()` blocks in [`tests/audit/invariants.spec.ts`](./invariants.spec.ts) — evolves as the site's design evolves intentionally. The MVP set is five home-page assertions ([#121](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/121)); Invariant 6 ([#147](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/147)) and Invariant 7 ([#148](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/148)) were added post-MVP as successive applications of the runbook's § When to add trigger 2 ("a new failure class is discovered") — both surfaced by the F1/F2 findings of the same PDR-007 UI-review pass. Undisciplined edits to that set defeat QA-10.3's purpose: **invariants are the institutional memory of the design decisions that must not regress**. Every add and every remove passes through this runbook.
 
 ## What an invariant is (and is not)
 
@@ -88,7 +88,7 @@ Manifest-key pattern (when the invariant is registered in a future manifest — 
 invariant_{subject}_{verb}_{PDR|REQ}_{id}
 ```
 
-Examples from the MVP set (and Invariant 6, added post-MVP):
+Examples from the MVP set (and Invariants 6 / 7, added post-MVP):
 
 - `invariant_wordmark_strongest_REQ_NAV_02` (Invariant 1 — REQ-NAV-02)
 - `invariant_color_accent_resolves_REQ_HOME_01_PDR_004` (Invariant 2 — REQ-HOME-01 / PDR-004)
@@ -96,6 +96,7 @@ Examples from the MVP set (and Invariant 6, added post-MVP):
 - `invariant_pillar_nav_no_overlap_PDR_006_C6` (Invariant 4 — PDR-006 constraint 6)
 - `invariant_site_nav_no_sticky_fixed_REQ_MOB_04` (Invariant 5 — REQ-MOB-04 forward-compat)
 - `invariant_latest_eyebrow_aligned_PDR_007_147` (Invariant 6 — PDR-007 discovery case, issue #147)
+- `invariant_home_block_axis_consistency_PDR_007_148` (Invariant 7 — PDR-007 discovery case, issue #148)
 
 The docblock must:
 
@@ -221,3 +222,4 @@ Outcome: every future PR that touches cards or tokens runs this invariant on `/`
 - [Issue #123](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/123) — tracking issue for this runbook.
 - [Issue #121](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/121) — QA-10.3 MVP invariant specs (the five MVP invariants this runbook governs).
 - [Issue #147](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/147) — Invariant 6 (`.latest-section` eyebrow alignment) — the first post-MVP addition under the § When to add trigger 2 ("new failure class discovered") path; a worked example of the add-an-invariant flow.
+- [Issue #148](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/148) — Invariant 7 (`.hero` / `.latest-section` horizontal alignment consistency) — second post-MVP addition; guards the "three blocks, three axes" failure class where the pre-#148 hero filled the viewport while `.latest-section` sat in a 48rem centered container, producing visually-divergent container widths at wide viewports.
