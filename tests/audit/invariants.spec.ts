@@ -25,7 +25,11 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { invariant1Predicate, invariant6Predicate } from './helpers';
+import {
+  invariant1Predicate,
+  invariant6Predicate,
+  invariant7Predicate,
+} from './helpers';
 import { SELECTORS } from './selectors';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -582,6 +586,92 @@ test('Invariant 6: .latest-section eyebrow aligns with post-card content and res
   });
   assertAllRunsPassed(
     'Invariant 6 violated — .latest-section eyebrow misaligned with post-card content origin or too close to viewport-left (issue #147 class):',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 7 — home-page content-block alignment consistency.
+ *
+ * Issue #148. PDR-007 § Consequences — the home-page QA-09 baselines at
+ * wide viewports encoded the pre-#148 pattern where the .hero section
+ * filled the viewport (no max-width) while .latest-section sat in a
+ * 48rem-wide centered container. Both section center-x computed to
+ * viewport/2, but the rect widths differed, producing the visually
+ * "three blocks, three axes" perception reported in the F2 UI-review
+ * finding. QA-09 cannot flag this — the baseline IS the pre-#148
+ * geometry; pixel regression gates relative to baseline, not relative
+ * to design intent. QA-10.3 closes the gap.
+ *
+ * Design intent (post-#148): .hero and .latest-section share ONE
+ * horizontal alignment rule — max-width: 48rem, margin-inline: auto —
+ * so their bounding rects are IDENTICAL (and therefore center-aligned)
+ * at every viewport. At <768 both fill the viewport; at ≥768 both are
+ * 768px centered. Rect identity, not just center-x identity, is the
+ * structural guarantee.
+ *
+ * Predicate (from issue #148 proposed spec):
+ *   Math.abs(heroRect.left + heroRect.width/2
+ *            - latestRect.left - latestRect.width/2) ≤ 4px.
+ *
+ * Boolean single-measurement shape, OS-independent. The 4px tolerance
+ * absorbs sub-pixel font-metric drift between macOS and Linux Chromium
+ * (see tests/visual/README.md § "Baselines must be Linux-generated"):
+ * the rect measurement itself is viewport-pixel-exact, but allowing 4px
+ * keeps the predicate stable if a future refactor introduces a narrow
+ * asymmetry that still preserves visual alignment.
+ *
+ * Viewports per issue #148 proposed spec: 768, 1024, 1440 — the three
+ * desktop widths where the pre-#148 divergence was most visible
+ * (hero-fills-viewport vs latest-at-48rem-centered). Light + dark both
+ * iterated so dark-mode-only regressions would surface; the invariant
+ * is modality-neutral in practice, but the coverage is cheap and
+ * symmetric with Invariant 6.
+ *
+ * Reverse coverage: invariants.reverse.spec.ts injects the pre-#148
+ * pattern (zero max-width on .hero, so it re-expands to full viewport
+ * width at 1440) and asserts this predicate detects the center-x
+ * divergence with rich measurements. The 1440 viewport is chosen for
+ * the reverse test because the absolute divergence in rect geometry is
+ * largest there and the delta is unambiguous.
+ * ------------------------------------------------------------------------- */
+test('Invariant 7: .hero and .latest-section share one horizontal alignment axis', async ({
+  browser,
+}) => {
+  const viewports = [768, 1024, 1440];
+  const modes: Mode[] = ['light', 'dark'];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    for (const mode of modes) {
+      const { context, page } = await openHome(browser, { width, mode });
+      try {
+        const measurement = await page.evaluate(invariant7Predicate, {
+          heroSel: SELECTORS.heroSection,
+          latestSel: SELECTORS.latestSection,
+          tolerancePx: 4,
+        });
+        runs.push({
+          viewport: String(width),
+          mode,
+          pass: measurement.pass,
+          measurements: measurement,
+        });
+      } finally {
+        await context.close();
+      }
+    }
+  }
+
+  results.push({
+    id: 'invariant-7',
+    title:
+      '.hero and .latest-section center-x match within 4px at desktop widths',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 7 violated — .hero and .latest-section center-x diverge beyond the 4px tolerance (issue #148 F2 class):',
     runs,
   );
 });

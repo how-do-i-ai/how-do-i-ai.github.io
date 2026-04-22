@@ -67,10 +67,33 @@ const hasPosts = posts.length > 0;
 </BaseLayout>
 
 <style>
-  /* Hero section */
+  /*
+    Hero section — container rule shared with .latest-section below per
+    issue #148 (Invariant 7, QA-10.3). Both sections use max-width: 48rem
+    with margin-inline: auto so their bounding rects are identical at all
+    viewports: at ≥768 the section is 768px centered, at <768 it fills
+    the viewport. This makes hero and latest share ONE horizontal
+    alignment axis rather than the pre-#148 pattern where hero filled
+    the viewport and latest sat in a narrower centered container —
+    visually "three blocks, three axes" (see issue body).
+
+    Horizontal padding mirrors .latest-section (0 at base, var(--space-4)
+    at ≥480) so mobile "collapse to the same full-width padding" is
+    literal, not conceptual. Vertical rhythm stays on --space-section-y
+    (hero's own cadence); only the HORIZONTAL rule is unified with
+    .latest-section.
+  */
   .hero {
+    max-width: 48rem;
+    margin-inline: auto;
     text-align: center;
-    padding: var(--space-section-y) var(--space-section-x);
+    padding: var(--space-section-y) 0;
+  }
+
+  @media (min-width: 480px) /* --bp-sm */ {
+    .hero {
+      padding: var(--space-section-y) var(--space-4);
+    }
   }
 
   .hero-brand {

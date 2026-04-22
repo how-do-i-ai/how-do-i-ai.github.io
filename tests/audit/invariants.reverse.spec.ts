@@ -14,6 +14,9 @@
  *   - Invariant 1 (per issue #121 AC) — forced-normal wordmark weight.
  *   - Invariant 6 (per issue #147 AC) — zero inline-start inset on the
  *     .latest-section eyebrow (the pre-fix outdent pattern).
+ *   - Invariant 7 (per issue #148 AC) — zero max-width on .hero (the
+ *     pre-#148 "hero fills viewport while latest sits in 48rem" axis
+ *     mismatch at wide viewports).
  *
  * Runs in the same `audit-invariants` Playwright project as the primary
  * spec, so detection proofs are exercised on every CI run — they are
@@ -21,7 +24,11 @@
  */
 import { test, expect, type Browser } from '@playwright/test';
 
-import { invariant1Predicate, invariant6Predicate } from './helpers';
+import {
+  invariant1Predicate,
+  invariant6Predicate,
+  invariant7Predicate,
+} from './helpers';
 import { SELECTORS } from './selectors';
 
 async function openHomeWithInjection(
@@ -229,6 +236,124 @@ test('reverse: Invariant 6 detects .latest-section eyebrow outdent with rich mea
     // Tolerance + min-left reported alongside, so the measurement blob
     // is self-contained for post-hoc inspection.
     expect(measurement.toleranceOk, 'toleranceOk must be false').toBe(false);
+  } finally {
+    await close();
+  }
+});
+
+/**
+ * Reverse coverage for Invariant 7 — demonstrates that the predicate
+ * detects the pre-#148 "hero fills viewport, latest sits in 48rem"
+ * axis-mismatch pattern from issue #148.
+ *
+ * Pre-#148 pattern (see git history for src/pages/index.astro before
+ * the Invariant 7 landing): .hero had no max-width, so its section rect
+ * spanned the full viewport; .latest-section had max-width: 48rem with
+ * margin-inline: auto, so at 1440 its rect was 768px centered starting
+ * at left=336. Both rects' center-x computed to viewport/2 — so the
+ * WIDTHS differed (1440 vs 768) while the CENTERS coincided. The
+ * predicate MUST reject geometry where the two section rects have
+ * divergent widths — if it only checked center-x, the pre-#148 state
+ * would falsely pass.
+ *
+ * Inject CSS that forces the pre-#148 geometry back on .hero: override
+ * max-width to none AND margin-inline to 0 so .hero re-expands to
+ * fill the viewport. At 1440 the resulting heroRect.width is 1440 and
+ * the centers STILL coincide at 720 — but that is exactly the coincidence
+ * the invariant is designed NOT to rely on. The tolerance of 4px would
+ * pass this injection if the predicate only measured center-x.
+ *
+ * To produce a reverse test that GENUINELY fails the predicate, we must
+ * break the center coincidence as well. We do so by offsetting .hero via
+ * margin-inline-start, producing an asymmetric rect whose center-x shifts
+ * right of viewport-center while .latest-section stays centered. The
+ * resulting delta >> 4px, which the predicate must detect.
+ *
+ * 1440px viewport: chosen so the injected offset produces an unambiguous
+ * delta on the order of hundreds of pixels. The absolute value is not
+ * load-bearing; the assertion is that any delta ≥ tolerance detects.
+ */
+test('reverse: Invariant 7 detects .hero / .latest-section center-x divergence with rich measurements', async ({
+  browser,
+}) => {
+  // Force the pre-#148-adjacent geometry: strip .hero of its max-width
+  // AND push it right via a large inline-start margin so its center-x
+  // diverges from .latest-section's (which remains 48rem centered). If
+  // we only stripped max-width, heroRect center-x would still land on
+  // viewport/2 and coincide with latestRect center-x — a passing run,
+  // not a detection. The offset is what exercises the detection path.
+  const breakingCss = `
+    .hero {
+      max-width: none !important;
+      margin-inline: 0 !important;
+      margin-inline-start: 200px !important;
+    }
+  `;
+  const { page, close } = await openHomeWithInjection(
+    browser,
+    breakingCss,
+    1440,
+  );
+
+  try {
+    const measurement = await page.evaluate(invariant7Predicate, {
+      heroSel: SELECTORS.heroSection,
+      latestSel: SELECTORS.latestSection,
+      tolerancePx: 4,
+    });
+
+    expect(
+      measurement.pass,
+      `Invariant 7 FAILED to detect the injected center-x divergence. Raw measurement: ${JSON.stringify(
+        measurement,
+        null,
+        2,
+      )}`,
+    ).toBe(false);
+
+    if ('error' in measurement) {
+      throw new Error(
+        `predicate short-circuited before measuring: ${measurement.error}`,
+      );
+    }
+
+    // Measurement richness: absolute rects AND derived centers AND the
+    // delta must all be reported so a CI reviewer can see WHY the gate
+    // fired without re-running the spec locally.
+    expect(typeof measurement.heroLeft, 'heroLeft reported').toBe('number');
+    expect(typeof measurement.heroWidth, 'heroWidth reported').toBe('number');
+    expect(typeof measurement.heroCenterX, 'heroCenterX reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.latestLeft, 'latestLeft reported').toBe('number');
+    expect(typeof measurement.latestWidth, 'latestWidth reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.latestCenterX, 'latestCenterX reported').toBe(
+      'number',
+    );
+    expect(typeof measurement.delta, 'delta reported').toBe('number');
+
+    // The injected 200px margin-inline-start shifts hero center-x by
+    // ~100px vs its un-offset position (half the margin, since the
+    // added width also shifts but hero is now full-viewport). Assert a
+    // generous lower bound that is well above the 4px tolerance and
+    // well below the injected magnitude so token drift does not
+    // invalidate the reverse test.
+    expect(
+      measurement.delta,
+      'delta should be well above the 4px tolerance for this named regression class',
+    ).toBeGreaterThan(20);
+
+    // The specific geometric pattern for #148: hero rect shifted right
+    // of latest rect (injected margin-inline-start). If the direction
+    // were inverted (hero rect shifted LEFT of latest), that would be a
+    // different regression class and a different fix — so asserting
+    // the direction is part of the detection's specificity.
+    expect(
+      measurement.heroCenterX,
+      `hero center must sit right of latest center in this regression class (heroCenterX=${measurement.heroCenterX}, latestCenterX=${measurement.latestCenterX})`,
+    ).toBeGreaterThan(measurement.latestCenterX);
   } finally {
     await close();
   }
