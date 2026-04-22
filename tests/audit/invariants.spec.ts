@@ -31,6 +31,7 @@ import {
   invariant1Predicate,
   invariant6Predicate,
   invariant7Predicate,
+  invariant8Predicate,
   invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
@@ -688,6 +689,92 @@ test('Invariant 7: .hero and .latest-section share one horizontal alignment axis
   });
   assertAllRunsPassed(
     'Invariant 7 violated — .hero and .latest-section center-x diverge beyond the 4px tolerance (issue #148 F2 class):',
+    runs,
+  );
+});
+
+/* ---------------------------------------------------------------------------
+ * Invariant 8 — Footer stacked-layout column alignment.
+ *
+ * Issue #149 (PDR-007 audit discovery case; F3 Major). The stacked footer
+ * layout (≤600px viewport) places the tagline and the About link on
+ * consecutive rows at the left edge of the footer's content column. The
+ * design intent is that the two elements share a left coordinate — a
+ * future refactor that shifted the link box right of the tagline (e.g.,
+ * added margin-inline-start, or swapped the flex context so the link no
+ * longer tracks flex-start) would visibly break the shared-column
+ * rhythm that the stacked layout assumes.
+ *
+ * Design context (post-#149): the rendered "About" text aligns with the
+ * tagline's first character thanks to the stacked-layout `justify-content:
+ * flex-start` override on `.footer-link` (Footer.astro). The touch target
+ * min-width stays at var(--touch-target) per WCAG 2.5.5 / REQ-MOB-03 —
+ * the fix relaxes horizontal text centering only in the stacked layout.
+ * Invariant 8 asserts the element-rect alignment as a forward-compat
+ * guard (see helpers.ts § invariant8Predicate for the scope note). The
+ * rendered-text shift itself is gated by QA-09 pixel baselines
+ * regenerated with the fix; this invariant catches element-shift
+ * regressions that pixel diff would also catch but at a different
+ * abstraction layer.
+ *
+ * Predicate (from issue #149 proposed spec):
+ *   |taglineRect.left - aboutLinkRect.left| ≤ 1px.
+ *
+ * Viewports per issue #149 proposed spec: 320, 375, 414, 480, 600 — the
+ * five within the stacked-layout range (max-width: 639px). At ≥640px
+ * the About link moves to the right edge of the horizontal row and the
+ * shared-column assumption no longer applies, so the invariant
+ * deliberately does NOT cover wider widths. Light + dark both iterated
+ * so dark-mode-only regressions surface; the invariant is
+ * modality-neutral in practice but the coverage is cheap and symmetric
+ * with Invariant 6 / Invariant 7.
+ *
+ * Reverse coverage: invariants.reverse.spec.ts injects the pre-fix-shape
+ * class as a DOM mutation (adds margin-inline-start: 24px to the link)
+ * and asserts this predicate detects the element-rect divergence with
+ * rich measurements. The DOM-mutation pattern matches the Invariant 9 +
+ * 11 reverse tests (OS-robust — see the Invariant 11 reverse block's
+ * explanation of why CSS-only injection can miss on Linux at borderline
+ * metrics). The injected shift (24px) is well above the 1px tolerance.
+ * ------------------------------------------------------------------------- */
+test('Invariant 8: footer tagline and About link share a left coordinate in stacked layout', async ({
+  browser,
+}) => {
+  const viewports = [320, 375, 414, 480, 600];
+  const modes: Mode[] = ['light', 'dark'];
+  const runs: RunResult[] = [];
+
+  for (const width of viewports) {
+    for (const mode of modes) {
+      const { context, page } = await openHome(browser, { width, mode });
+      try {
+        const measurement = await page.evaluate(invariant8Predicate, {
+          footerSel: SELECTORS.siteFooter,
+          taglineSel: SELECTORS.footerTagline,
+          aboutLinkSel: SELECTORS.footerAboutLink,
+          tolerancePx: 1,
+        });
+        runs.push({
+          viewport: String(width),
+          mode,
+          pass: measurement.pass,
+          measurements: measurement,
+        });
+      } finally {
+        await context.close();
+      }
+    }
+  }
+
+  results.push({
+    id: 'invariant-8',
+    title:
+      'footer tagline and About link share a left coordinate in stacked layout',
+    pass: runs.every((r) => r.pass),
+    runs,
+  });
+  assertAllRunsPassed(
+    'Invariant 8 violated — footer tagline and About link rects diverge beyond the 1px tolerance in stacked layout (issue #149 F3 class):',
     runs,
   );
 });
