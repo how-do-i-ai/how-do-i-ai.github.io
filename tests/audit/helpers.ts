@@ -373,6 +373,99 @@ export const invariant8Predicate = ({
   };
 };
 
+export type Invariant10Measurement =
+  | { pass: false; error: string }
+  | {
+      pass: boolean;
+      linkCount: number;
+      rowCount: number;
+      lastRowCount: number;
+      rows: Array<{ top: number; labels: string[] }>;
+    };
+
+/**
+ * Invariant 10 predicate — footer social icon row wrap has no
+ * single-icon widow on the final row.
+ *
+ * Issue #151. The footer's 9-icon channel list (8 social channels +
+ * RSS) has an odd count; natural flex-wrap at specific viewports
+ * (≤374 and the mid-tablet band ~768-845 on current Linux) lands one
+ * icon alone on the final row. At 320 that's a 4-row layout of
+ * 2+3+3+1; at the mid-tablet band it's 8+1. Both read as oversight
+ * and reduce the visual weight of whichever icon was orphaned (most
+ * notably RSS — the brand's primary subscription CTA after the
+ * PDR-005 analytics deferral).
+ *
+ * Predicate: group `.channel-link` elements by rounded
+ * `getBoundingClientRect().top` (1px tolerance collapses sub-pixel
+ * font-metric drift between macOS and Linux Chromium — matches the
+ * approach in Invariants 3 + 11 + 6). If the resulting row count is
+ * greater than 1, the LAST row's element count must be at least 2.
+ * Single-row layouts (the ≥1024 desktop case) trivially satisfy the
+ * invariant with no assertion on row 1's count beyond "all icons
+ * fit".
+ *
+ * Tolerance rationale: row grouping uses `Math.round(top)` first,
+ * then a 1px merge step across adjacent top coordinates — same
+ * shape as Invariant 3's line grouping. The invariant asserts row
+ * MEMBERSHIP, not geometric exactness, so the shape is boolean and
+ * OS-independent.
+ *
+ * Scope note: the `.channel-link` selector deliberately targets the
+ * anchor elements, not their `<li>` wrappers. The widow-prevention
+ * `.wrap-spacer` `<li>` carries no `.channel-link` and no visible
+ * content (height 0, `flex-basis: 100%`); it is therefore naturally
+ * excluded from row grouping even when active. The predicate sees
+ * exactly the 9 visible icons.
+ */
+export const invariant10Predicate = ({
+  selector,
+  tolerancePx,
+  minLastRow,
+}: {
+  selector: string;
+  tolerancePx: number;
+  minLastRow: number;
+}): Invariant10Measurement => {
+  const links = Array.from(document.querySelectorAll(selector));
+  if (links.length === 0) {
+    return { pass: false, error: `no elements match selector: ${selector}` };
+  }
+
+  type Entry = { top: number; label: string };
+  const entries: Entry[] = links.map((el) => {
+    const top = el.getBoundingClientRect().top;
+    const label = (el.querySelector('span')?.textContent ?? '').trim();
+    return { top, label: label || '(no-label)' };
+  });
+
+  // Group by top-coordinate with tolerance. Same shape as Invariant 3:
+  // sort by top, then bucket into rows where each subsequent entry
+  // either joins an existing row (within tolerance) or starts a new
+  // one.
+  const sorted = [...entries].sort((a, b) => a.top - b.top);
+  const rows: Array<{ top: number; labels: string[] }> = [];
+  for (const entry of sorted) {
+    const existing = rows.find(
+      (r) => Math.abs(r.top - entry.top) <= tolerancePx,
+    );
+    if (existing) existing.labels.push(entry.label);
+    else rows.push({ top: entry.top, labels: [entry.label] });
+  }
+
+  const lastRow = rows[rows.length - 1];
+  const lastRowCount = lastRow.labels.length;
+  const pass = rows.length === 1 || lastRowCount >= minLastRow;
+
+  return {
+    pass,
+    linkCount: links.length,
+    rowCount: rows.length,
+    lastRowCount,
+    rows,
+  };
+};
+
 export type PostSummaryEntry = {
   postId: string;
   text: string;

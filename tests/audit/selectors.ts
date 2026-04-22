@@ -67,6 +67,14 @@ export const SELECTORS = {
   siteFooter: '.site-footer',
   footerTagline: '.site-footer .tagline',
   footerAboutLink: '.site-footer .footer-link',
+  // added for Invariant 10 — issue #151. The footer's nine-icon social
+  // + RSS row can wrap into multiple rows at narrow/mid viewports; the
+  // invariant asserts no single-icon widow on the final row. The
+  // selector targets `.channel-link` anchors directly (not the `<li>`
+  // wrappers) so the widow-prevention `.wrap-spacer` helper `<li>` —
+  // which carries no `.channel-link` class and contributes no visible
+  // content — is naturally excluded from the row grouping.
+  channelLink: '.site-footer .channel-link',
 } as const;
 
 export type SelectorKey = keyof typeof SELECTORS;

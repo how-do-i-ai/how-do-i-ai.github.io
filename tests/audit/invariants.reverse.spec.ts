@@ -21,6 +21,11 @@
  *     shifted right of the tagline in the stacked layout. Injected via
  *     DOM-mutated inline style (matches the OS-robust convention
  *     established by Invariants 9 + 11 reverse tests).
+ *   - Invariant 10 (per issue #151 AC) — footer social row wraps with a
+ *     single-icon widow on the final row. Reproduced via DOM mutation:
+ *     remove the `.wrap-spacer` `<li>` at 320, re-exposing the pre-fix
+ *     2+3+3+1 natural wrap distribution. Matches the OS-robust
+ *     convention of Invariants 8 + 9 + 11.
  *   - Invariant 9 (per issue #150 AC) — server-side textContent
  *     divergence across index surfaces. Injected via DOM mutation
  *     (not CSS) because the predicate asserts textContent, not
@@ -42,6 +47,7 @@ import {
   invariant6Predicate,
   invariant7Predicate,
   invariant8Predicate,
+  invariant10Predicate,
   invariant11Predicate,
 } from './helpers';
 import { SELECTORS } from './selectors';
@@ -638,6 +644,131 @@ test('reverse: Invariant 9 detects textContent divergence across index surfaces'
     correlation.sharedCount,
     'sharedCount must be ≥1 so the reverse test exercises divergence detection, not the zero-shared guard',
   ).toBeGreaterThan(0);
+});
+
+/**
+ * Reverse coverage for Invariant 10 — demonstrates that the predicate
+ * detects the pre-fix 2+3+3+1 footer social-row widow from issue #151.
+ *
+ * Pre-fix pattern: at 320 viewport, natural flex-wrap of the 9-icon
+ * channel list lands RSS alone on row 4 — a 2+3+3+1 distribution. The
+ * fix inserts a `.wrap-spacer` `<li>` between Facebook and X + RSS,
+ * gated to a `(max-width: 374px), (min-width: 768px) and (max-width:
+ * 845px)` media query so it activates exactly where natural wrap
+ * would widow. Removing the spacer element re-exposes the pre-fix
+ * wrap distribution.
+ *
+ * Mechanism: DOM mutation via `remove()` on the `.wrap-spacer`
+ * element. Matches the OS-robust convention of Invariants 8 + 9 +
+ * 11. A CSS override hiding the spacer would equally work since the
+ * spacer is the sole layout-changing element, but DOM mutation
+ * proves detection of the underlying widow class independent of the
+ * fix mechanism and harmonizes with the rest of the reverse suite.
+ *
+ * 320px viewport: the narrowest canonical width where the pre-fix
+ * natural wrap produces the 2+3+3+1 distribution. One reverse
+ * viewport is sufficient to prove detection; the mid-tablet 768-845
+ * band exhibits the same failure class (8+1 vs 7+2) and running
+ * both adds no failure class beyond what 320 already covers.
+ */
+test('reverse: Invariant 10 detects the footer single-icon widow with rich measurements', async ({
+  browser,
+}) => {
+  const width = 320;
+
+  const context = await browser.newContext({
+    viewport: { width, height: 900 },
+    colorScheme: 'light',
+    reducedMotion: 'reduce',
+  });
+  await context.addInitScript(() => {
+    window.localStorage.setItem('theme', 'light');
+  });
+  const page = await context.newPage();
+  await page.goto('/', { waitUntil: 'networkidle' });
+
+  try {
+    // DOM mutation: remove the `.wrap-spacer` element so the
+    // channel list reverts to natural flex-wrap. At 320 this
+    // produces the pre-fix 2+3+3+1 distribution.
+    const spacerRemoved = await page.evaluate(() => {
+      const spacer = document.querySelector('.site-footer .wrap-spacer');
+      if (!spacer) return false;
+      spacer.remove();
+      return true;
+    });
+
+    expect(
+      spacerRemoved,
+      'reverse setup requires a `.wrap-spacer` element to be present in the pre-fix code',
+    ).toBe(true);
+
+    const measurement = await page.evaluate(invariant10Predicate, {
+      selector: SELECTORS.channelLink,
+      tolerancePx: 1,
+      minLastRow: 2,
+    });
+
+    expect(
+      measurement.pass,
+      `Invariant 10 FAILED to detect the re-exposed widow. Raw measurement: ${JSON.stringify(
+        measurement,
+        null,
+        2,
+      )}`,
+    ).toBe(false);
+
+    if ('error' in measurement) {
+      throw new Error(
+        `predicate short-circuited before measuring: ${measurement.error}`,
+      );
+    }
+
+    // Measurement richness: link count, row count, last-row count,
+    // and the per-row label breakdown must all be reported so a CI
+    // reviewer can see WHICH icon widowed and WHERE the wrap
+    // occurred without re-running the spec locally.
+    expect(measurement.linkCount, 'linkCount reported').toBe(9);
+    expect(
+      measurement.rowCount,
+      'rowCount must be >1 for a multi-row widow class',
+    ).toBeGreaterThan(1);
+    expect(
+      measurement.lastRowCount,
+      'lastRowCount must be 1 for the pre-fix 2+3+3+1 widow',
+    ).toBe(1);
+    expect(
+      Array.isArray(measurement.rows),
+      'rows must be an array',
+    ).toBe(true);
+    expect(
+      measurement.rows.length,
+      'rows length must match rowCount',
+    ).toBe(measurement.rowCount);
+
+    // The specific geometric pattern for #151 at 320: the final row
+    // carries a single icon. Assert row-count ≥ 3 so the pattern
+    // specifically matches the multi-wrap widow class, not a
+    // degenerate "zero rows" or "single-row" edge case.
+    expect(
+      measurement.rowCount,
+      `rowCount must be ≥ 3 for the 320 widow class (got ${measurement.rowCount})`,
+    ).toBeGreaterThanOrEqual(3);
+
+    // The widowed icon at 320 pre-fix is RSS. Assert it is the
+    // content of the final row so the detection is specific to the
+    // named failure class rather than any single-icon last-row
+    // layout (which would also fail the predicate but not match
+    // the #151 regression class).
+    expect(
+      measurement.rows[measurement.rows.length - 1].labels,
+      `final-row label(s) should contain only the widowed icon (got ${JSON.stringify(
+        measurement.rows[measurement.rows.length - 1].labels,
+      )})`,
+    ).toHaveLength(1);
+  } finally {
+    await context.close();
+  }
 });
 
 /**
