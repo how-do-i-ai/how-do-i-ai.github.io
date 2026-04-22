@@ -131,8 +131,10 @@ jobs:
       # CI-time revisit thresholds in PDR-007. No Phase 1 component
       # uses path-filtering today.
       #
-      # Phase 2 (QA-10.4, QA-10.5) and Phase 3 (QA-10.6) extend this
-      # block in their own tracking issues — not here.
+      # Phase 2 extends this block with QA-10.5 (OG + RSS audit)
+      # as it ships; QA-10.4 (DOM cross-sections) is baked into the
+      # QA-09 Playwright suite and does not add a step here. Phase 3
+      # (QA-10.6) extends this block in its own tracking issue.
       # --------------------------------------------------------------
 
       - name: QA-10.1 — Route clustering
@@ -144,11 +146,15 @@ jobs:
       - name: QA-10.3 — Invariant specs
         run: npm run test:audit:invariants
 
+      - name: QA-10.5 — OG meta + RSS 2.0 audit
+        run: npm run test:audit:og-rss
+
       # Unified artifact upload — covers routes-report.json,
-      # widths-report.json, invariants-report.json. Triggered on
-      # failure only so reviewers can pull per-run reports without
-      # re-running the job. `if-no-files-found: ignore` accommodates
-      # early-failing audits that exit before writing their report.
+      # widths-report.json, invariants-report.json, og-rss-report.json.
+      # Triggered on failure only so reviewers can pull per-run reports
+      # without re-running the job. `if-no-files-found: ignore`
+      # accommodates early-failing audits that exit before writing
+      # their report.
       - name: Upload QA-10 audit reports
         if: failure()
         uses: actions/upload-artifact@v4

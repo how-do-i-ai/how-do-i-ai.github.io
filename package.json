@@ -14,7 +14,7 @@
     "test:visual:update": "npm run build && playwright test tests/visual --update-snapshots",
     "test:a11y": "npm run build && playwright test tests/a11y",
     "test:touch-targets": "npm run build && playwright test tests/a11y/touch-targets.spec.ts",
-    "test:audit": "npm run test:audit:routes && npm run test:audit:widths && npm run test:audit:invariants",
+    "test:audit": "npm run test:audit:routes && npm run test:audit:widths && npm run test:audit:invariants && npm run test:audit:og-rss",
     "test:audit:update": "npm run build && playwright test tests/audit --update-snapshots",
     "test:audit:routes": "npm run build && playwright test --project=audit-routes",
     "test:audit:routes:update": "npm run build && UPDATE_BASELINE=1 playwright test --project=audit-routes",
@@ -26,7 +26,8 @@
     "format:check": "prettier --check .",
     "typecheck": "astro check",
     "check:playwright-version-parity": "node scripts/check-playwright-version-parity.mjs",
-    "test:audit:widths": "npm run build && node scripts/extract-widths.mjs"
+    "test:audit:widths": "npm run build && node scripts/extract-widths.mjs",
+    "test:audit:og-rss": "npm run build && node scripts/audit-og-rss.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
@@ -40,6 +41,9 @@
     "@playwright/test": "^1.59.1",
     "eslint": "^10.2.0",
     "eslint-plugin-astro": "^1.7.0",
+    "fast-xml-parser": "5.7.1",
+    "gray-matter": "4.0.3",
+    "node-html-parser": "7.1.0",
     "postcss": "8.5.8",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
