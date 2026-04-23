@@ -5,8 +5,14 @@
  * Reads ?pillar=, ?series=, ?tag= and ?page= from the URL on mount.
  * Sets display:none on non-matching card wrappers via data attributes.
  * Updates the URL via history.replaceState.
- * Shows active filter chips with "X" to remove.
+ * Shows active filter chips with "X" to remove. Namespaced tags
+ * (`chapter:*`, `wwh:*`, PDR-009) resolve to human-readable labels via
+ * `formatTagChipLabel` — never shown as raw `namespace:slug` per
+ * REQ-CONTENT-MODEL-02 GWT.
  * Combined filters use AND logic.
+ * Empty-state message follows REQ-INDEX-03 ("No posts in [filter name]
+ * yet.") when exactly one filter is active; multi-filter and no-filter
+ * cases use a generic fallback.
  * Client-side pagination: shows/hides sets of 12 posts.
  */
 ---
@@ -25,12 +31,19 @@
   <div class="sr-only" id="filter-live" aria-live="polite" aria-atomic="true">
   </div>
 
-  <!-- Empty state (hidden by default) -->
+  <!--
+    Empty state (hidden by default).
+
+    The message text is injected by the island script per REQ-INDEX-03:
+    "No posts in [filter name] yet." when a single filter is active,
+    with [filter name] resolved via the label-resolution helpers in
+    `src/lib/taxonomy.ts` (REQ-CONTENT-MODEL-02 for chapter:*/wwh:*).
+    Multi-filter and no-filter cases fall back to a generic message.
+  -->
   <div class="empty-state" id="empty-state" hidden>
     <p>
-      No posts match your filters. <a href="/blog/" id="clear-filters-link"
-        >Show all posts</a
-      >
+      <span id="empty-state-message">No posts match your filters.</span>
+      <a href="/blog/" id="clear-filters-link">Show all posts</a>
     </p>
   </div>
 
@@ -261,7 +274,12 @@
 </style>
 
 <script>
-  import { PILLARS, SERIES } from '../lib/taxonomy';
+  import {
+    PILLARS,
+    SERIES,
+    formatTagChipLabel,
+    formatEmptyStateFilterName,
+  } from '../lib/taxonomy';
 
   const POSTS_PER_PAGE = 12;
 
@@ -272,6 +290,7 @@
     const grid = document.getElementById('post-grid');
     const chipsContainer = document.getElementById('filter-chips');
     const emptyState = document.getElementById('empty-state');
+    const emptyStateMessage = document.getElementById('empty-state-message');
     const pagination = document.getElementById('pagination');
     const prevBtn = document.getElementById(
       'pagination-prev',
@@ -287,6 +306,7 @@
       !grid ||
       !chipsContainer ||
       !emptyState ||
+      !emptyStateMessage ||
       !pagination ||
       !prevBtn ||
       !nextBtn ||
@@ -369,8 +389,12 @@
         );
       }
       if (filters.tag) {
+        // Namespaced tags (chapter:*/wwh:*) resolve to human-readable
+        // labels per REQ-CONTENT-MODEL-02; free-form tags render with
+        // `#` prefix (unchanged). Unknown namespaced slugs fall through
+        // to the raw string — see `formatTagChipLabel` in taxonomy.ts.
         chipsContainer!.appendChild(
-          createChip('tag', filters.tag, `#${filters.tag}`),
+          createChip('tag', filters.tag, formatTagChipLabel(filters.tag)),
         );
       }
     }
@@ -513,15 +537,38 @@
       // UI updates
       const hasFilters = !!(filters.pillar || filters.series || filters.tag);
       emptyState!.hidden = matching.length > 0;
+      // REQ-INDEX-03 empty-state template: "No posts in [filter name]
+      // yet." when exactly one filter is active, with [filter name]
+      // resolved via `formatEmptyStateFilterName`. Zero or multiple
+      // active filters fall back to the generic baseline message.
+      // Assignment uses textContent (not innerHTML) so crafted URL
+      // values cannot inject markup into the chip button or the
+      // empty-state message — matches the chip-rendering constraint
+      // documented above `createChip`.
+      if (matching.length === 0) {
+        const filterName = formatEmptyStateFilterName(filters);
+        emptyStateMessage!.textContent = filterName
+          ? `No posts in ${filterName} yet.`
+          : 'No posts match your filters.';
+      }
       renderChips(filters);
       renderPagination(matching.length, currentPage, totalPages);
 
-      // Announce results to screen readers
+      // Announce results to screen readers. The empty-state announcement
+      // mirrors the visible empty-state message above (REQ-INDEX-03 +
+      // REQ-CONTENT-MODEL-02) so auditory and visual experiences stay
+      // in sync — cherry-picking the label resolution for sighted users
+      // only would diverge from WCAG 2.2 AA auditory equivalence.
       if (liveRegion && hasFilters) {
-        const msg =
-          matching.length === 0
-            ? 'No posts match your filters.'
-            : `${matching.length} post${matching.length === 1 ? '' : 's'} found.`;
+        let msg: string;
+        if (matching.length === 0) {
+          const filterName = formatEmptyStateFilterName(filters);
+          msg = filterName
+            ? `No posts in ${filterName} yet.`
+            : 'No posts match your filters.';
+        } else {
+          msg = `${matching.length} post${matching.length === 1 ? '' : 's'} found.`;
+        }
         liveRegion.textContent = msg;
       } else if (liveRegion) {
         liveRegion.textContent = '';
