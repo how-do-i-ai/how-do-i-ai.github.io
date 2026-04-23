@@ -120,3 +120,85 @@ export function partitionTags(tags: readonly string[]): {
   }
   return { namespaced, freeForm };
 }
+
+/**
+ * Resolve a `chapter:{slug}` tag to its human-readable label, or return
+ * `null` if the tag is not a known chapter. Typos and hand-crafted URL
+ * values (e.g., `chapter:judgement`) return null rather than throwing —
+ * build-time `superRefine` validation is the gate for editorial correctness;
+ * the filter UI receives whatever the URL carries at runtime.
+ */
+export function resolveChapterLabel(tag: string): string | null {
+  const PREFIX = 'chapter:';
+  if (!tag.startsWith(PREFIX)) return null;
+  const slug = tag.slice(PREFIX.length);
+  if (!(CHAPTER_SLUGS as readonly string[]).includes(slug)) return null;
+  return CHAPTER_LABELS[slug as (typeof CHAPTER_SLUGS)[number]];
+}
+
+/**
+ * Resolve a `wwh:{slug}` tag to its human-readable label, or return `null`
+ * if the tag is not a known W/W/H content type. See `resolveChapterLabel`
+ * for the unknown-slug rationale.
+ */
+export function resolveWwhLabel(tag: string): string | null {
+  const PREFIX = 'wwh:';
+  if (!tag.startsWith(PREFIX)) return null;
+  const slug = tag.slice(PREFIX.length);
+  if (!(WWH_SLUGS as readonly string[]).includes(slug)) return null;
+  return WWH_LABELS[slug as (typeof WWH_SLUGS)[number]];
+}
+
+/**
+ * Format a tag value for display as an active-filter chip on the blog
+ * index. Reserved namespaces (`chapter:*`, `wwh:*`) resolve to their
+ * human-readable labels per PDR-009 § 4 / REQ-CONTENT-MODEL-02 GWT.
+ * Free-form tags render as `#tag` (preserving pre-PDR-009 UI behavior).
+ * Unknown namespaced slugs fall through to the raw string rather than
+ * throwing so that hand-crafted URLs do not crash the client island.
+ * Non-reserved colon tags (`tool:vim`, `lang:ts`) are free-form and
+ * render with the `#` prefix — the reserved-namespace check uses
+ * `isNamespacedTag` (#175) so the gate matches the partition logic
+ * applied on post cards.
+ */
+export function formatTagChipLabel(tag: string): string {
+  return (
+    resolveChapterLabel(tag) ??
+    resolveWwhLabel(tag) ??
+    (isNamespacedTag(tag) ? tag : `#${tag}`)
+  );
+}
+
+/**
+ * Resolve the filter name for the empty-state template (REQ-INDEX-03:
+ * "No posts in [filter name] yet."). Returns `null` when zero or multiple
+ * filters are active, signalling that the caller should fall back to a
+ * generic "No posts match your filters." message.
+ *
+ * For tag filters, namespaced tags (`chapter:*`, `wwh:*`) resolve to their
+ * human-readable labels per REQ-CONTENT-MODEL-02; free-form tags return
+ * the raw tag string (no `#` prefix — the empty state reads as prose, not
+ * a tag affordance).
+ */
+export function formatEmptyStateFilterName(filters: {
+  pillar: string;
+  series: string;
+  tag: string;
+}): string | null {
+  const activeCount =
+    (filters.pillar ? 1 : 0) + (filters.series ? 1 : 0) + (filters.tag ? 1 : 0);
+  if (activeCount !== 1) return null;
+
+  if (filters.pillar) {
+    return PILLARS[filters.pillar as PillarSlug] ?? filters.pillar;
+  }
+  if (filters.series) {
+    return SERIES[filters.series as SeriesSlug] ?? filters.series;
+  }
+  // filters.tag is the only remaining non-empty field.
+  return (
+    resolveChapterLabel(filters.tag) ??
+    resolveWwhLabel(filters.tag) ??
+    filters.tag
+  );
+}
