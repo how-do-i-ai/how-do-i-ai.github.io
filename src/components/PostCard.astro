@@ -1,6 +1,8 @@
 ---
 import PillarBadge from './PillarBadge.astro';
 import SeriesBadge from './SeriesBadge.astro';
+import ChapterBadge from './ChapterBadge.astro';
+import WwhBadge from './WwhBadge.astro';
 import TagList from './TagList.astro';
 import { formatDate } from '../lib/format-date';
 import { estimateReadingTime } from '../lib/reading-time';
@@ -32,13 +34,17 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
 // Free-form tags only feed the +N-capped TagList; namespaced tags
 // (chapter:*, wwh:*) render as dedicated badges via #166 / W-H and must
 // not pollute the cap. PDR-009 § 7 / REQ-CONTENT-MODEL-03 (#168).
-const { freeForm: freeFormTags } = partitionTags(tags);
+const { namespaced, freeForm: freeFormTags } = partitionTags(tags);
+const chapterTag = namespaced.find((t) => t.startsWith('chapter:'));
+const wwhTag = namespaced.find((t) => t.startsWith('wwh:'));
 ---
 
 <a href={`/blog/${post.id}/`} class="post-card" data-post-id={post.id}>
   <div class="post-card-badges">
     <PillarBadge pillar={pillar} />
     {series && <SeriesBadge series={series} />}
+    {chapterTag && <ChapterBadge tag={chapterTag} />}
+    {wwhTag && <WwhBadge tag={wwhTag} />}
   </div>
 
   <h3 class="post-card-title">{title}</h3>
