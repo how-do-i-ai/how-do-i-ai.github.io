@@ -11,10 +11,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import BlogPostLayout from '../../layouts/BlogPostLayout.astro';
 import PillarBadge from '../../components/PillarBadge.astro';
 import SeriesBadge from '../../components/SeriesBadge.astro';
+import ChapterBadge from '../../components/ChapterBadge.astro';
+import WwhBadge from '../../components/WwhBadge.astro';
 import PrevNextNav from '../../components/PrevNextNav.astro';
 import RelatedPosts from '../../components/RelatedPosts.astro';
 import { getPublishedPosts, getRelatedPosts } from '../../lib/posts';
 import { estimateReadingTime } from '../../lib/reading-time';
+import { partitionTags } from '../../lib/taxonomy';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -50,6 +53,13 @@ const prevPost =
 
 // Get related posts (same-series > same-pillar, up to 3).
 const relatedPosts = await getRelatedPosts(post, 3);
+
+// Resolve namespaced-tag badges (PDR-009 chapter:* / wwh:*). Unknown slugs
+// are handled defensively by ChapterBadge / WwhBadge (render nothing if
+// resolveChapterLabel / resolveWwhLabel return null).
+const { namespaced } = partitionTags(post.data.tags);
+const chapterTag = namespaced.find((t) => t.startsWith('chapter:'));
+const wwhTag = namespaced.find((t) => t.startsWith('wwh:'));
 ---
 
 <BaseLayout
@@ -61,6 +71,8 @@ const relatedPosts = await getRelatedPosts(post, 3);
     <div class="post-badges" slot="badges">
       <PillarBadge pillar={post.data.pillar} />
       {post.data.series && <SeriesBadge series={post.data.series} />}
+      {chapterTag && <ChapterBadge tag={chapterTag} />}
+      {wwhTag && <WwhBadge tag={wwhTag} />}
     </div>
     <Content />
   </BlogPostLayout>
