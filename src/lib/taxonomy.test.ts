@@ -124,7 +124,7 @@ describe('partitionTags', () => {
 
   describe('REQ-CONTENT-MODEL-03 cap-exclusion scenarios (#168)', () => {
     // These three cases mirror the post-card AC: the freeForm count drives
-    // the existing "3 visible + +N more" cap on `TagList`; the namespaced
+    // the existing "3 visible + '+N more'" cap on `TagList`; the namespaced
     // count drives the dedicated badge surface (W-H scope, #166). Both
     // numbers must be correct for the cap-exclusion semantic to hold.
 
@@ -141,7 +141,7 @@ describe('partitionTags', () => {
       expect(namespaced).toHaveLength(2);
     });
 
-    it('AC2 — 5 free-form + 1 namespaced ⇒ 3 visible + +2 more, 1 namespaced', () => {
+    it('AC2 — 5 free-form + 1 namespaced ⇒ 3 visible + "+2 more", 1 namespaced', () => {
       const { freeForm, namespaced } = partitionTags([
         'a',
         'b',
