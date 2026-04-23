@@ -24,6 +24,12 @@ interface Props {
     description: string;
     date: Date;
     readingTime?: number;
+    /**
+     * Post tags from frontmatter. Used to carry PDR-009 namespaced-tag
+     * signals (`chapter:*`, `wwh:*`) into the Article JSON-LD. Non-namespaced
+     * tags are ignored here; they surface elsewhere as tag badges.
+     */
+    tags?: string[];
     [key: string]: unknown;
   };
   headings: { depth: number; slug: string; text: string }[];
@@ -37,6 +43,15 @@ const formattedDate = new Date(frontmatter.date).toLocaleDateString('en-US', {
   day: 'numeric',
 });
 
+// Extract PDR-009 namespaced-tag slugs for JSON-LD. Raw string ops suffice
+// because `content.config.ts` superRefine already validates slugs at build
+// time; `buildArticleSchema` is defensive against unknown slugs anyway.
+const tags = frontmatter.tags ?? [];
+const chapterTag = tags.find((t) => t.startsWith('chapter:'));
+const wwhTag = tags.find((t) => t.startsWith('wwh:'));
+const chapterSlug = chapterTag?.slice('chapter:'.length);
+const wwhSlug = wwhTag?.slice('wwh:'.length);
+
 // Per-post structured data. `Astro.site` is defined in astro.config.mjs and
 // required for absolute URLs; skip schema injection if it's absent.
 const articleSchema = Astro.site
@@ -47,6 +62,8 @@ const articleSchema = Astro.site
       url: new URL(Astro.url.pathname, Astro.site),
       siteUrl: Astro.site,
       imageUrl: new URL('/brand/og-default.png', Astro.site),
+      chapterSlug,
+      wwhSlug,
     })
   : null;
 

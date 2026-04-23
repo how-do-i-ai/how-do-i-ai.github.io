@@ -8,7 +8,18 @@
  *
  * HDIAI is an Organization, not a Person. Author and publisher always
  * reference the Organization @id — no personal/founder attribution.
+ *
+ * Article carries optional PDR-009 § 7 namespaced-tag signals:
+ *   - chapter:{slug} → isPartOf CreativeWorkSeries (name + 1-based position)
+ *   - wwh:{slug}     → learningResourceType (LRMI-style Text hint)
+ * This is PDR-009 S5 (machine-readable-first) riding on S1 (tag namespace).
  */
+
+import {
+  CHAPTER_LABELS,
+  CHAPTER_SLUGS,
+  WWH_SLUGS,
+} from './taxonomy';
 
 /**
  * Stable @id fragment for the HDIAI Organization. Referenced from Article
@@ -82,6 +93,28 @@ export interface ArticleSchemaInput {
   url: URL;
   siteUrl: URL;
   imageUrl: URL;
+  /**
+   * Raw `chapter:*` slug (without prefix), e.g. `'judgment'`. Unknown slugs
+   * are silently omitted rather than throwing — build-time `superRefine`
+   * validation in `content.config.ts` is the editorial gate; the builder
+   * stays defensive so a stale consumer cannot crash a rendered page.
+   */
+  chapterSlug?: string;
+  /**
+   * Raw `wwh:*` slug (without prefix), e.g. `'how-to-do'`. See `chapterSlug`
+   * for unknown-slug rationale.
+   */
+  wwhSlug?: string;
+}
+
+export interface CreativeWorkSeriesRef {
+  '@type': 'CreativeWorkSeries';
+  name: string;
+  /**
+   * 1-based position of this chapter in the canonical reading order
+   * (`CHAPTER_SLUGS` index + 1). First Moves = 1, … Meta-skill = 7.
+   */
+  position: number;
 }
 
 export interface ArticleSchema {
@@ -98,7 +131,28 @@ export interface ArticleSchema {
     '@type': 'WebPage';
     '@id': string;
   };
+  isPartOf?: CreativeWorkSeriesRef;
+  learningResourceType?: string;
 }
+
+/**
+ * Map each `wwh:*` slug to its `learningResourceType` hint. `meta-outside`
+ * carries no useful learning-resource semantics (the post is not itself a
+ * learning artifact) and is mapped to `null` so the field is omitted rather
+ * than emitted with a meaningless value. The remaining three are LRMI-style
+ * Text values; schema.org's `learningResourceType` accepts any Text, so this
+ * passes the schema.org validator — the values are interpretable hints for
+ * AEO crawlers, not enumerated schema types.
+ */
+export const WWH_LEARNING_RESOURCE_TYPE: Record<
+  (typeof WWH_SLUGS)[number],
+  string | null
+> = {
+  'what-works': 'Assessment',
+  'when-to-use': 'DecisionSupport',
+  'how-to-do': 'Tutorial',
+  'meta-outside': null,
+};
 
 export function buildArticleSchema(input: ArticleSchemaInput): ArticleSchema {
   const organizationRef = {
@@ -126,6 +180,29 @@ export function buildArticleSchema(input: ArticleSchemaInput): ArticleSchema {
     input.dateModified.getTime() !== input.datePublished.getTime()
   ) {
     schema.dateModified = input.dateModified.toISOString();
+  }
+
+  if (input.chapterSlug) {
+    const idx = (CHAPTER_SLUGS as readonly string[]).indexOf(input.chapterSlug);
+    if (idx >= 0) {
+      const slug = input.chapterSlug as (typeof CHAPTER_SLUGS)[number];
+      schema.isPartOf = {
+        '@type': 'CreativeWorkSeries',
+        name: CHAPTER_LABELS[slug],
+        position: idx + 1,
+      };
+    }
+  }
+
+  if (
+    input.wwhSlug &&
+    (WWH_SLUGS as readonly string[]).includes(input.wwhSlug)
+  ) {
+    const slug = input.wwhSlug as (typeof WWH_SLUGS)[number];
+    const type = WWH_LEARNING_RESOURCE_TYPE[slug];
+    if (type !== null) {
+      schema.learningResourceType = type;
+    }
   }
 
   return schema;
