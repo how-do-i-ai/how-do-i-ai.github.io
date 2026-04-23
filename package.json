@@ -24,7 +24,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "astro check",
+    "typecheck": "astro sync && astro check",
     "check:playwright-version-parity": "node scripts/check-playwright-version-parity.mjs",
     "test:audit:widths": "npm run build && node scripts/extract-widths.mjs",
     "test:audit:og-rss": "npm run build && node scripts/audit-og-rss.mjs"
