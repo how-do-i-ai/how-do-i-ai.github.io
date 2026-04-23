@@ -10,6 +10,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Minimal permissions. `contents: read` is the default but pinning
+    # it makes the grant explicit. `pull-requests: write` enables the
+    # aggregated audit-report upsert comment on pull_request events;
+    # push-to-main runs do not use it (the comment step is gated on
+    # `github.event_name == 'pull_request'`).
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -165,6 +173,62 @@ jobs:
           path: tests/audit/__reports__/*.json
           retention-days: 14
           if-no-files-found: ignore
+
+      # --------------------------------------------------------------
+      # QA-10 aggregated audit report (#131).
+      #
+      # Consumes the per-component JSON reports emitted by QA-10.1
+      # (routes), QA-10.2 (widths), QA-10.3 (invariants), and QA-10.5
+      # (og-rss) above, and renders a single consolidated Markdown
+      # document. QA-10.4 runs inline inside the QA-07/08/09 step and
+      # does not emit its own JSON today; the aggregator handles that
+      # gracefully (see scripts/audit-report.mjs docblock).
+      #
+      # `if: ${{ !cancelled() }}` — the aggregator must run regardless
+      # of whether earlier audit steps passed or failed (AC bullet 3:
+      # "regardless of pass/fail"). Skipped steps leave their JSON
+      # absent; the aggregator reports them as NOT RUN.
+      #
+      # The script itself always exits 0 — aggregator reports, never
+      # gates. CI gating stays on the per-component steps whose non-zero
+      # exits stop the build independently.
+      # --------------------------------------------------------------
+      - name: QA-10 aggregated audit report
+        if: ${{ !cancelled() }}
+        run: node scripts/audit-report.mjs
+
+      - name: Upload aggregated audit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-10-audit-report
+          path: tests/audit/__reports__/audit-report.md
+          retention-days: 14
+          if-no-files-found: warn
+
+      # PR-comment upsert (AC bullet 4): ONE stable comment per PR,
+      # updated in place on re-runs (never appended). Marker string
+      # `<!-- qa-10-audit-report -->` is set by the aggregator's
+      # COMMENT_MARKER constant; find-comment locates by marker and
+      # create-or-update-comment replaces the body. Gated on PR events
+      # because push-to-main runs have no PR to comment on.
+      - name: Find previous audit report comment
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        id: find-audit-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- qa-10-audit-report -->'
+
+      - name: Create or update audit report comment
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-audit-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: tests/audit/__reports__/audit-report.md
+          edit-mode: replace
 
       # QA-06 Lighthouse mobile gates. Builds once at step above; LHCI
       # runs its own static server from ./dist, so no preview needed.
