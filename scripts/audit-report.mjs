@@ -66,11 +66,19 @@ export const JSON_ARTIFACT_NAME = 'qa-10-audit-reports';
  * to `tests/audit/__reports__/`), a human title, and the classifier
  * that converts parsed JSON → status object.
  *
- * QA-10.4 is intentionally `report_file: null` — its pass/fail is
- * surfaced via the QA-09 Playwright step, not a per-run JSON. The
- * classifier for that entry returns an `inline` status that renders
- * a graceful-degradation note pointing at where the checks and
- * baselines live.
+ * QA-10.4 declares `report_file: 'cross-sections-report.json'`, but
+ * that file is NOT emitted by the current implementation — its pass/
+ * fail is surfaced inline via the QA-09 Playwright step (sidecar
+ * reconciliation in `tests/visual/screenshots.spec.ts`), and its
+ * artifacts are `.styles.json` baselines under
+ * `tests/visual/__baselines__/`. In the common case
+ * `loadReport` returns `null` for QA-10.4, and the classifier for
+ * that entry (`classifyCrossSections`) returns an `inline` status
+ * that renders a graceful-degradation note pointing at where the
+ * checks and baselines live. If a future iteration starts emitting
+ * `cross-sections-report.json` at the declared path, the classifier
+ * falls through to a standard pass/fail on `violations[]` — no
+ * descriptor change required.
  */
 export const COMPONENTS = [
   {
