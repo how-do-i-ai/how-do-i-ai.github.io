@@ -10,14 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Minimal permissions. `contents: read` is the default but pinning
-    # it makes the grant explicit. `pull-requests: write` enables the
-    # aggregated audit-report upsert comment on pull_request events;
-    # push-to-main runs do not use it (the comment step is gated on
-    # `github.event_name == 'pull_request'`).
+    # The build job is read-only with respect to GitHub API surfaces.
+    # Write access is scoped to the `audit-comment` job below, which
+    # runs only on pull_request events — keeping push-to-main runs from
+    # carrying any PR-write capability they would never exercise.
     permissions:
       contents: read
-      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -206,30 +204,6 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
-      # PR-comment upsert (AC bullet 4): ONE stable comment per PR,
-      # updated in place on re-runs (never appended). Marker string
-      # `<!-- qa-10-audit-report -->` is set by the aggregator's
-      # COMMENT_MARKER constant; find-comment locates by marker and
-      # create-or-update-comment replaces the body. Gated on PR events
-      # because push-to-main runs have no PR to comment on.
-      - name: Find previous audit report comment
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-        id: find-audit-comment
-        uses: peter-evans/find-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- qa-10-audit-report -->'
-
-      - name: Create or update audit report comment
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.find-audit-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: tests/audit/__reports__/audit-report.md
-          edit-mode: replace
-
       # QA-06 Lighthouse mobile gates. Builds once at step above; LHCI
       # runs its own static server from ./dist, so no preview needed.
       - name: QA-06 — Lighthouse mobile gates
@@ -242,3 +216,52 @@ jobs:
           name: lighthouseci
           path: .lighthouseci/
           retention-days: 14
+
+  # ----------------------------------------------------------------
+  # QA-10 audit-report PR comment upsert (#131).
+  #
+  # Runs only on pull_request events. Kept as a separate job so the
+  # PR-write permission stays scoped to the comment-posting surface —
+  # the `build` job above runs on push-to-main too and is read-only.
+  #
+  # `needs: build` so the aggregated Markdown artifact exists before
+  # this job runs. `if: ${{ !cancelled() && github.event_name == ... }}`
+  # — `!cancelled()` (not `always()`) ensures the comment upsert
+  # still runs when the build job exited non-zero with an audit
+  # failure, but does NOT run if the workflow itself was cancelled.
+  # ----------------------------------------------------------------
+  audit-comment:
+    needs: build
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download aggregated audit report
+        uses: actions/download-artifact@v4
+        with:
+          name: qa-10-audit-report
+          path: qa-10-audit-report
+
+      # PR-comment upsert (AC bullet 4): ONE stable comment per PR,
+      # updated in place on re-runs (never appended). Marker string
+      # `<!-- qa-10-audit-report -->` is set by the aggregator's
+      # COMMENT_MARKER constant; find-comment locates by marker and
+      # create-or-update-comment replaces the body.
+      - name: Find previous audit report comment
+        id: find-audit-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- qa-10-audit-report -->'
+
+      - name: Create or update audit report comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-audit-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: qa-10-audit-report/audit-report.md
+          edit-mode: replace
