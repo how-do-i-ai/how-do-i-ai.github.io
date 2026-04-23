@@ -4,6 +4,7 @@ import SeriesBadge from './SeriesBadge.astro';
 import TagList from './TagList.astro';
 import { formatDate } from '../lib/format-date';
 import { estimateReadingTime } from '../lib/reading-time';
+import { partitionTags } from '../lib/taxonomy';
 
 interface Props {
   post: {
@@ -27,6 +28,11 @@ const { title, description, date, pillar, series, tags, readingTime } =
 
 const displayDate = formatDate(date);
 const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
+
+// Free-form tags only feed the +N-capped TagList; namespaced tags
+// (chapter:*, wwh:*) render as dedicated badges via #166 / W-H and must
+// not pollute the cap. PDR-009 § 7 / REQ-CONTENT-MODEL-03 (#168).
+const { freeForm: freeFormTags } = partitionTags(tags);
 ---
 
 <a href={`/blog/${post.id}/`} class="post-card" data-post-id={post.id}>
@@ -45,7 +51,7 @@ const minutes = readingTime ?? (post.body ? estimateReadingTime(post.body) : 1);
     <span>{minutes} min read</span>
   </div>
 
-  {tags.length > 0 && <TagList tags={tags} />}
+  {freeFormTags.length > 0 && <TagList tags={freeFormTags} />}
 </a>
 
 <style>

@@ -72,3 +72,51 @@ export const WWH_LABELS: Record<(typeof WWH_SLUGS)[number], string> = {
   'how-to-do': 'How to do?',
   'meta-outside': 'Meta',
 };
+
+/**
+ * Reserved tag namespaces per PDR-009 § Reserved Tag Namespaces. A tag of
+ * the form `{ns}:{slug}` where `{ns}` matches one of these is a namespaced
+ * tag (rendered as a dedicated labeled badge). Anything else is a free-form
+ * tag (rendered in the +N-capped tag list on post cards).
+ */
+export const RESERVED_NAMESPACES = ['chapter', 'wwh'] as const;
+
+/**
+ * True if `tag` is `{ns}:{slug}` where `{ns}` is one of `RESERVED_NAMESPACES`
+ * and both `{ns}` and `{slug}` are non-empty. Empty namespace (`:foo`),
+ * empty slug (`chapter:`), missing colon (`foo`), and unreserved namespaces
+ * (`foo:bar`) all return `false` — those are free-form tags.
+ *
+ * Slug character validation (kebab-case, membership in `CHAPTER_SLUGS` /
+ * `WWH_SLUGS`) is the Zod schema's job (W-G / #165), not this predicate's.
+ * For rendering, "namespaced" means the prefix matters, not the slug value.
+ */
+export function isNamespacedTag(tag: string): boolean {
+  const idx = tag.indexOf(':');
+  if (idx <= 0) return false;
+  if (idx === tag.length - 1) return false;
+  const ns = tag.slice(0, idx);
+  return (RESERVED_NAMESPACES as readonly string[]).includes(ns);
+}
+
+/**
+ * Partition `tags` into `namespaced` (matching `RESERVED_NAMESPACES`) and
+ * `freeForm` (everything else), preserving input order within each group.
+ *
+ * Used by post-card components so the existing "3 visible + '+N more'" cap
+ * on `TagList` applies to free-form tags only — namespaced tags render as
+ * dedicated badges via PDR-009 § 7 / REQ-CONTENT-MODEL-03 (#166) and must
+ * not pollute the cap (#168 / REQ-CONTENT-MODEL-03 display rule).
+ */
+export function partitionTags(tags: readonly string[]): {
+  namespaced: string[];
+  freeForm: string[];
+} {
+  const namespaced: string[] = [];
+  const freeForm: string[] = [];
+  for (const tag of tags) {
+    if (isNamespacedTag(tag)) namespaced.push(tag);
+    else freeForm.push(tag);
+  }
+  return { namespaced, freeForm };
+}
