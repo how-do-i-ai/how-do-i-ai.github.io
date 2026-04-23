@@ -186,7 +186,7 @@ describe('resolveChapterLabel', () => {
   });
 
   it('returns null for unknown chapter slugs (no runtime crash)', () => {
-    expect(resolveChapterLabel('chapter:judgement')).toBeNull(); // British mis-spell
+    expect(resolveChapterLabel('chapter:judgement')).toBeNull(); // British misspelling
     expect(resolveChapterLabel('chapter:nonexistent')).toBeNull();
     expect(resolveChapterLabel('chapter:')).toBeNull();
   });
