@@ -1,5 +1,6 @@
 import type { APIContext } from 'astro';
 import { groupPostsByChapter } from '../lib/llms-curriculum';
+import { formatMarkdownLink } from '../lib/llms-markdown';
 import { getPublishedPosts } from '../lib/posts';
 
 /**
@@ -60,14 +61,18 @@ export async function GET(context: APIContext) {
       if (chapter.posts.length === 0) continue;
       lines.push('', `### ${chapter.label}`, '');
       for (const post of chapter.posts) {
-        lines.push(`- [${post.data.title}](${site}/blog/${post.id}/)`);
+        lines.push(
+          `- ${formatMarkdownLink(post.data.title, `${site}/blog/${post.id}/`)}`,
+        );
       }
     }
 
     if (curriculum.unclassified.length > 0) {
       lines.push('', '### Unclassified', '');
       for (const post of curriculum.unclassified) {
-        lines.push(`- [${post.data.title}](${site}/blog/${post.id}/)`);
+        lines.push(
+          `- ${formatMarkdownLink(post.data.title, `${site}/blog/${post.id}/`)}`,
+        );
       }
     }
   }
