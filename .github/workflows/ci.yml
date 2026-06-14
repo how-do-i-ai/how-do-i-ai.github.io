@@ -72,6 +72,13 @@ jobs:
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+        # Fast-fail guard: a stall fails in 8 min instead of eating the
+        # whole 30-min job budget. The historical 30-min hang was the
+        # Node 24.16 extract-zip deadlock (yauzl stream-destruction,
+        # microsoft/playwright#40998), cured by the @playwright/test
+        # 1.60.0 upgrade. This timeout is belt-and-suspenders for any
+        # future stall on this historically-cold install step.
+        timeout-minutes: 8
         run: npx playwright install --with-deps chromium
 
       - name: Install Playwright system deps
