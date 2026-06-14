@@ -35,7 +35,7 @@ export const ORGANIZATION_ID_FRAGMENT = '#organization';
  * locks the expected set.
  */
 export const ORGANIZATION_SAME_AS: readonly string[] = [
-  'https://www.youtube.com/@Learn.How-Do-I-AI',
+  'https://www.youtube.com/@Ask.How-Do-I-AI',
   'https://www.linkedin.com/company/how-do-i-ai/',
   'https://www.instagram.com/how_do_i_ai/',
   'https://www.tiktok.com/@how_do_i_ai',
