@@ -41,7 +41,7 @@ describe('buildOrganizationSchema', () => {
 
   it('locks the canonical channel URL set (in sync with Footer.astro)', () => {
     expect(ORGANIZATION_SAME_AS).toEqual([
-      'https://www.youtube.com/@Learn.How-Do-I-AI',
+      'https://www.youtube.com/@Ask.How-Do-I-AI',
       'https://www.linkedin.com/company/how-do-i-ai/',
       'https://www.instagram.com/how_do_i_ai/',
       'https://www.tiktok.com/@how_do_i_ai',
