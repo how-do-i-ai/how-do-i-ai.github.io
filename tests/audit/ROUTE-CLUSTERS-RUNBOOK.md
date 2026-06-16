@@ -72,7 +72,7 @@ Use this procedure when a new page shape ships (e.g., a new `src/pages/**/*.astr
 
    ```bash
    docker run --rm -v "$(pwd)":/work -w /work -e CI=true \
-     mcr.microsoft.com/playwright:v1.59.1-noble \
+     mcr.microsoft.com/playwright:v1.60.0-noble \
      sh -c "npm ci && UPDATE_BASELINE=1 npm run test:audit:routes"
    ```
 
@@ -131,7 +131,7 @@ Procedure when you need to change normalization:
 
    ```bash
    docker run --rm -v "$(pwd)":/work -w /work -e CI=true \
-     mcr.microsoft.com/playwright:v1.59.1-noble \
+     mcr.microsoft.com/playwright:v1.60.0-noble \
      sh -c "npm ci && UPDATE_BASELINE=1 npm run test:audit:routes"
    ```
 
@@ -291,7 +291,7 @@ Hypothetical: a new `src/pages/author/[slug].astro` page ships, generating `/aut
 
    ```bash
    docker run --rm -v "$(pwd)":/work -w /work -e CI=true \
-     mcr.microsoft.com/playwright:v1.59.1-noble \
+     mcr.microsoft.com/playwright:v1.60.0-noble \
      sh -c "npm ci && UPDATE_BASELINE=1 npm run test:audit:routes"
    ```
 
