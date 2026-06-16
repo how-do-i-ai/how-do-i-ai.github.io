@@ -46,9 +46,9 @@ const VIEWPORTS: readonly Viewport[] = [
 const TARGETS: readonly Target[] = [
   { label: 'home', path: '/' },
   { label: 'blog-index', path: '/blog/' },
-  // sample-post is the only published post at v1; if additional posts land,
-  // pick one explicitly — a11y scope is "at least one" per QA-08.
-  { label: 'blog-post', path: '/blog/sample-post/' },
+  // the-30-second-ai-explainer is the only published post at v1; if additional
+  // posts land, pick one explicitly — a11y scope is "at least one" per QA-08.
+  { label: 'blog-post', path: '/blog/the-30-second-ai-explainer/' },
 ];
 
 const MODES: readonly Mode[] = ['light', 'dark'];

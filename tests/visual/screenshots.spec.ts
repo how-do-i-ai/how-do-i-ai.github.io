@@ -41,16 +41,16 @@ type Mode = 'light' | 'dark';
 const MODES: readonly Mode[] = ['light', 'dark'] as const;
 
 /**
- * Target pages. The blog-post slug `sample-post` is the only post
- * currently in `src/content/blog/`. When additional posts are added,
- * this baseline suite intentionally remains pinned to `sample-post` so
- * the regression gate isn't noisy on content changes — it's a
- * layout/tokens gate, not a content gate.
+ * Target pages. The blog-post slug `the-30-second-ai-explainer` is the only
+ * post currently in `src/content/blog/`. When additional posts are added,
+ * this baseline suite intentionally remains pinned to this slug so the
+ * regression gate isn't noisy on content changes — it's a layout/tokens
+ * gate, not a content gate.
  */
 const PAGES = [
   { name: 'home', path: '/' },
   { name: 'blog-index', path: '/blog/' },
-  { name: 'blog-post', path: '/blog/sample-post/' },
+  { name: 'blog-post', path: '/blog/the-30-second-ai-explainer/' },
 ] as const;
 
 /**
