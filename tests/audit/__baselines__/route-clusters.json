@@ -1,18 +1,18 @@
 {
   "archetypes": {
     "home": {
-      "skeleton_hash": "081ffa35d1f3693c0bc01eb3e60e0f10bd0012261401242c5e104ed1ac3793ac",
+      "skeleton_hash": "7ae2a639372bd245877aea4a7c32cb6695e99d1ca7e70c56748f4ebb50159f72",
       "canonical_path": "/",
       "registered": "2026-04-21"
     },
     "blog-index": {
-      "skeleton_hash": "9d6e5d28361b4c1810b9c46c2bab524329b30cf32d5acacddd5fb500d4571e49",
+      "skeleton_hash": "a065e42df5bdeb88e1bb1022e3cdecb3d03e2c19086083be94408db653cb2574",
       "canonical_path": "/blog/",
       "registered": "2026-04-21"
     },
     "blog-post": {
-      "skeleton_hash": "088aec23695bd23b178fe37d3907de1272d88b934e90455aecdcc95287a86d52",
-      "canonical_path": "/blog/sample-post/",
+      "skeleton_hash": "58724ba122154f5dc3d0b063cbc2a23d955ad73e1c7d33aba5001340376c9b8e",
+      "canonical_path": "/blog/the-30-second-ai-explainer/",
       "registered": "2026-04-21"
     },
     "about": {
@@ -29,7 +29,7 @@
   "route_assignments": {
     "/": "home",
     "/blog/": "blog-index",
-    "/blog/sample-post/": "blog-post",
+    "/blog/the-30-second-ai-explainer/": "blog-post",
     "/about/": "about",
     "/404.html": "error"
   }

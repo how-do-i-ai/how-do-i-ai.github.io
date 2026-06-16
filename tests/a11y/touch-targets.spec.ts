@@ -19,7 +19,7 @@ const MIN_TARGET = 44;
 const PAGES: ReadonlyArray<{ label: string; path: string }> = [
   { label: 'home', path: '/' },
   { label: 'blog-index', path: '/blog/' },
-  { label: 'blog-post', path: '/blog/sample-post/' },
+  { label: 'blog-post', path: '/blog/the-30-second-ai-explainer/' },
 ];
 
 /** Issue #95 AC: <a>, <button>, <details summary>, <input>. */
