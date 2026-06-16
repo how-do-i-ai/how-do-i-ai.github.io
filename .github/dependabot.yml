@@ -1,0 +1,58 @@
+# Dependabot — https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#
+# Currency without floating "latest". The visual-regression suite pins Playwright to
+# an exact Chromium build (72 baselines + 72 style sidecars) behind a Docker<->npm
+# version-parity gate (tests/visual/DOCKER_IMAGE_TAG + scripts/check-playwright-version-parity.mjs),
+# so an unpinned "latest" would invalidate baselines on an uncontrolled schedule.
+# Instead we stay pinned and let Dependabot propose each bump as a reviewable PR.
+# (Security advisories still open PRs immediately, independent of the weekly cadence.)
+version: 2
+updates:
+  # ── npm: package.json / package-lock.json ──────────────────────────────────
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 8
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Playwright family lands in ONE atomic PR. A bump usually changes the bundled
+      # Chromium, so on that PR also: bump tests/visual/DOCKER_IMAGE_TAG to the matching
+      # vX.Y.Z-noble tag and regenerate baselines in that container
+      # (npm run test:visual:update && npm run test:audit:update), then merge when green.
+      playwright:
+        patterns:
+          - "*playwright*"
+      # Everything else: batch minor + patch into one weekly PR to cut review noise.
+      # Majors match no group below -> they arrive as individual PRs for individual review.
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ── GitHub Actions: .github/workflows/*.yml ────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
