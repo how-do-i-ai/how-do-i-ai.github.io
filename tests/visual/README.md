@@ -23,7 +23,7 @@ Playwright screenshot baselines for QA-09 (see `hq/docs/website/prd.md` § QA-09
 
 - **Layout regressions** at the 12 viewport widths that matter for HDIAI: `320, 375, 414, 480, 500, 600, 640, 700, 767, 768, 1024, 1440` (CSS px). Canonical source: [`tests/config/widths.ts`](../config/widths.ts) — consumed by `tests/visual/screenshots.spec.ts` (QA-09) and `scripts/extract-widths.mjs` (QA-10.2) to prevent drift.
 - **Dark-mode parity**: every width is captured in both light and dark color schemes.
-- **Three canonical surfaces**: `/` (home), `/blog/` (blog index), `/blog/sample-post/` (a blog post) — representing the three layout archetypes the site serves.
+- **Three canonical surfaces**: `/` (home), `/blog/` (blog index), `/blog/the-30-second-ai-explainer/` (a blog post) — representing the three layout archetypes the site serves.
 - The **480–767 collapse band** specifically — per PDR-006 constraint 6 (see `hq/docs/website/prd.md#qa-09-mobile-visual-regression`) and the 2026-04-19 amendment. This is the width range where Pattern A single-row navigation is emergent rather than enforced; the B1 regression in PR #99 came from untested assumptions here.
 
 3 pages × 12 widths × 2 color schemes = **72 baseline snapshots** per run.

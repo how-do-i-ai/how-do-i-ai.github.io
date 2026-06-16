@@ -5,7 +5,7 @@
       "url": [
         "http://localhost/",
         "http://localhost/blog/",
-        "http://localhost/blog/sample-post/"
+        "http://localhost/blog/the-30-second-ai-explainer/"
       ],
       "numberOfRuns": 3,
       "settings": {
