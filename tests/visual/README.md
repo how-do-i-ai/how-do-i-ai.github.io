@@ -145,7 +145,7 @@ docker run --rm \
   -v "$(pwd)":/work \
   -w /work \
   -e CI=true \
-  mcr.microsoft.com/playwright:v1.59.1-noble \
+  mcr.microsoft.com/playwright:v1.60.0-noble \
   sh -c "npm ci && npm run test:visual:update"
 ```
 

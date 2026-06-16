@@ -399,7 +399,7 @@ test.describe('QA-10.1 Route Clustering', () => {
             `  If the structural change is intentional, regenerate the ` +
               `baseline in Docker:`,
             `    docker run --rm -v "$(pwd)":/work -w /work -e CI=true \\`,
-            `      mcr.microsoft.com/playwright:v1.59.1-noble \\`,
+            `      mcr.microsoft.com/playwright:v1.60.0-noble \\`,
             `      sh -c "npm ci && UPDATE_BASELINE=1 npm run test:audit:routes"`,
             `  and commit the updated tests/audit/__baselines__/route-clusters.json.`,
             `  Procedure: tests/audit/ROUTE-CLUSTERS-RUNBOOK.md § Normalization changes ` +
