@@ -24,9 +24,6 @@ tests/audit/__reports__/
 
 # Temporary scratch files
 .tmp/*
-# Scoped exception: the PDR-006 branch-build work requires visual-compare
-# screenshots as a committed deliverable so GitHub renders them inline.
-!.tmp/branch-build-screenshots/
 
 # Claude Code project configuration
 .claude/

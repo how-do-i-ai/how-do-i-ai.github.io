@@ -152,15 +152,3 @@ docker run --rm \
 `test:visual:update` refreshes both the `.png` baselines and the `.styles.json` sidecars because QA-10.4 extends `screenshots.spec.ts` rather than running as a separate spec — one matrix, two artifact types, one regen. The same container regenerates `tests/audit/`-scoped baselines (today: `route-clusters.json`) via `UPDATE_BASELINE=1 npm run test:audit:routes:update`; reserve `npm run test:audit:update` for Playwright snapshot updates under `tests/audit/` (see § Audit script family above for the current Phase 1 no-op caveat). Docker parity for the audit baseline family was established in **[#128](https://github.com/how-do-i-ai/how-do-i-ai.github.io/issues/128)**.
 
 This produces byte-identical baselines to what CI will compare against on the next push. Local regeneration on macOS or Windows is not authoritative — per `hq/docs/website/audit-tooling-design.md` § 5 Risk 3, PRs that touch rendering-mode baselines should state in the commit message that they were regenerated in Docker.
-
----
-
-## Relationship with `.tmp/branch-build-screenshots/`
-
-`/.tmp/branch-build-screenshots/` contains **66 pre-existing screenshots** from the PDR-006 branch-build mobile-polish work. They are:
-
-- **Not regression baselines.** They were per-branch snapshots used for human visual comparison during the Wave 1–3 mobile redesign.
-- **Artifacts of a past workflow**, preserved because the PDR-006 work treated them as inline-rendered deliverables in GitHub.
-- **Not consumed by either QA-09 or QA-10.** Nothing in `tests/visual/` or `tests/audit/` reads, writes, or diffs against them.
-
-The canonical regression baselines for post-launch visual integrity live under `tests/visual/__baselines__/` (QA-09 PNGs today, QA-10.4 style sidecars and QA-10.6 rendering-mode PNGs as those phases land). The branch-build screenshots are kept for historical provenance only — see `.gitignore` for the scoped retention exception.
