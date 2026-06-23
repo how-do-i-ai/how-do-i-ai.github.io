@@ -1,6 +1,6 @@
 ---
 title: 'The 30-second AI explainer'
-description: "Most people are missing a working model of AI. Here's one you can hold in 30 seconds — a prediction machine that absorbed a library and guesses the next word — plus the three things it lets you predict."
+description: "How does AI actually work? The mental model that sticks: it's a prediction machine that absorbed a library and guesses the next word — also why AI sounds confident when it's wrong and gives different answers to the same question."
 date: 2026-06-16
 pillar: thinking
 tags:
@@ -90,11 +90,17 @@ Three clauses, three demos, one frame: AI absorbed a library, it guesses what co
 
 A frame earns its keep by what it lets you see coming. This one buys you three predictions.
 
-**One: AI will be confident even when it's wrong.** There's no truth-checking step, and it was trained to generate plausible next words, not true ones. Plausible and true line up when the question is well-trodden and come apart on the edges. Once I held this frame, I stopped being surprised when AI invented a citation. I'd asked it to retrieve; it can only generate. That isn't betrayal — it's the machine being honest about what it is. (When to verify and when not to bother is its own piece.)
+### Why does AI sound so confident when it's wrong?
 
-**Two: AI is context-sensitive in ways that surprise you.** Different prompts pull different patterns. Same question, different framing, different answer — sometimes a single extra sentence at the top of your prompt flips the response completely, not because AI changed its mind but because that sentence steered into a different region of what it learned. Once you see AI as guessing from patterns, prompt engineering stops being a black art. You're not casting spells. You're aiming the guess.
+There's no truth-checking step, and it was trained to generate plausible next words, not true ones. Plausible and true line up when the question is well-trodden and come apart on the edges. Once I held this frame, I stopped being surprised when AI invented a citation. I'd asked it to retrieve; it can only generate. That isn't betrayal — it's the machine being honest about what it is. (When to verify and when not to bother is its own piece.)
 
-**Three: AI gets shaky on genuinely new reasoning.** Pattern-matching is what it does best — summarize, rephrase, translate, classify, draft — and on those it's at its strongest. Ask it to reason over something with no precedent in what it absorbed — a fresh logical structure, an original chain of analysis — and it gets jagged. (The gap between "knows a lot" and "thinks well about something it's never seen" is its own piece, later in this series.)
+### AI is context-sensitive in ways that surprise you
+
+Different prompts pull different patterns. Same question, different framing, different answer — sometimes a single extra sentence at the top of your prompt flips the response completely, not because AI changed its mind but because that sentence steered into a different region of what it learned. Once you see AI as guessing from patterns, prompt engineering stops being a black art. You're not casting spells. You're aiming the guess.
+
+### AI gets shaky on genuinely new reasoning
+
+Pattern-matching is what it does best — summarize, rephrase, translate, classify, draft — and on those it's at its strongest. Ask it to reason over something with no precedent in what it absorbed — a fresh logical structure, an original chain of analysis — and it gets jagged. (The gap between "knows a lot" and "thinks well about something it's never seen" is its own piece, later in this series.)
 
 A fair objection: am I oversimplifying? What about tuning on human feedback, multimodality, tool use, reasoning models that visibly "think" before they answer? Right — a complete explanation takes a semester. The 30-second frame is a starting frame, and it holds across every one of those. Human-feedback tuning adjusts what AI predicts; it shapes the distribution. Multimodality changes what it can predict about — text becomes images becomes audio. Reasoning models generate intermediate thinking tokens before the final answer: the chain is longer, the mechanism is unchanged. Add the nuance when you need it. The starting frame holds.
 
