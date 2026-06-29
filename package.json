@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.18",
-    "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/sitemap": "^3.7.3",
     "astro": "^6.1.8"
   },
   "devDependencies": {
@@ -39,17 +39,17 @@
     "@axe-core/playwright": "^4.11.2",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.60.0",
-    "eslint": "^10.2.0",
+    "eslint": "^10.6.0",
     "eslint-plugin-astro": "^1.7.0",
-    "fast-xml-parser": "5.7.1",
+    "fast-xml-parser": "5.9.3",
     "gray-matter": "4.0.3",
     "node-html-parser": "7.1.0",
-    "postcss": "8.5.10",
-    "prettier": "^3.8.3",
+    "postcss": "8.5.16",
+    "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.58.2",
-    "vitest": "^4.1.4"
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.9"
   },
   "overrides": {
     "esbuild": "0.28.1"
