@@ -36,9 +36,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
-    "@axe-core/playwright": "^4.11.2",
+    "@axe-core/playwright": "^4.12.1",
     "@lhci/cli": "^0.15.1",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.61.1",
     "eslint": "^10.2.0",
     "eslint-plugin-astro": "^1.7.0",
     "fast-xml-parser": "5.7.1",
